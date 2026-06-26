@@ -5,10 +5,11 @@ import { useFluidStore } from "@/lib/store";
 import { getLenis } from "@/lib/lenis";
 
 const SECTIONS = [
-  { name: "Genesis", range: [0, 0.14] as const },
-  { name: "Current", range: [0.14, 0.4] as const },
-  { name: "Islands", range: [0.4, 0.8] as const },
-  { name: "Abyss", range: [0.8, 1.0] as const },
+  { name: "Genesis", range: [0, 0.08] as const },
+  { name: "Cognition", range: [0.08, 0.25] as const },
+  { name: "Islands", range: [0.25, 0.75] as const },
+  { name: "Core", range: [0.75, 0.9] as const },
+  { name: "Terminal", range: [0.9, 1.0] as const },
 ];
 
 /**
@@ -54,8 +55,8 @@ export default function ProgressNav() {
             width: "100%",
             height: `${p * 100}%`,
             background:
-              "linear-gradient(to bottom, var(--iridescent-violet), var(--iridescent-cyan))",
-            boxShadow: "0 0 10px rgba(0,240,255,0.6)",
+              "linear-gradient(to bottom, var(--argyph), var(--indigo), var(--flowe))",
+            boxShadow: "0 0 10px rgba(94,92,230,0.6)",
             transition: "height 0.1s linear",
           }}
         />
@@ -77,7 +78,7 @@ export default function ProgressNav() {
             onClick={() => jump(s.range)}
             className="font-ui text-[10px] transition-colors"
             style={{
-              color: i === activeIdx ? "var(--iridescent-cyan)" : "var(--text-secondary)",
+              color: i === activeIdx ? "var(--indigo)" : "var(--text-secondary)",
             }}
           >
             {String(i + 1).padStart(2, "0")} · {s.name}

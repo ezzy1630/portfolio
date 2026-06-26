@@ -10,21 +10,25 @@
   --font-mono: var(--font-mono);
   --color-abyss: var(--abyss);
   --color-liquid: var(--liquid);
-  --color-iridescent-violet: var(--iridescent-violet);
-  --color-iridescent-cyan: var(--iridescent-cyan);
+  --color-indigo: var(--indigo);
+  --color-monkeyclaw: var(--monkeyclaw);
+  --color-flowe: var(--flowe);
+  --color-argyph: var(--argyph);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
 }
 
 /* ============================================================
-   THE KINETIC FLUID CANVAS — Design Tokens
+   THE KINETIC FLUID CANVAS — Design Tokens (Expanded Vision)
    ============================================================ */
 :root {
-  /* Color Palette */
-  --abyss: #030303;            /* Pure black with 1% blue tint */
-  --liquid: #0a0a0f;           /* Liquid metal base */
-  --iridescent-violet: #4a00e0;/* Slow fluid */
-  --iridescent-cyan: #00f0ff;  /* Fast fluid */
+  /* Color Palette — The Deep System */
+  --abyss: #050507;            /* Pure black + hint of blue */
+  --liquid: #0a0a0f;           /* Fluid base */
+  --indigo: #5e5ce6;           /* Apple Indigo — AI/Cognition velocity */
+  --monkeyclaw: #ff375f;       /* Pink/Red — attack/security */
+  --flowe: #0a84ff;            /* Apple Blue — structure/scale */
+  --argyph: #ff9f0a;           /* Orange — Rust/local-first */
   --text-primary: #f5f5f7;     /* Apple White */
   --text-secondary: #86868b;   /* Apple Gray */
 
@@ -33,30 +37,36 @@
   --font-stretch: 100%;
   --font-weight-var: 400;
 
+  /* Active project accent (drives fluid tint + UI) */
+  --accent-r: 0.04;
+  --accent-g: 0.52;
+  --accent-b: 1.0;
+  --accent: #0a84ff;
+
   /* Easings */
   --ease-act: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-hover: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Radius kept for shadcn compat */
+  /* shadcn compat */
   --radius: 0.625rem;
-  --background: #030303;
+  --background: #050507;
   --foreground: #f5f5f7;
   --card: #0a0a0f;
   --card-foreground: #f5f5f7;
   --popover: #0a0a0f;
   --popover-foreground: #f5f5f7;
   --primary: #f5f5f7;
-  --primary-foreground: #030303;
+  --primary-foreground: #050507;
   --secondary: #14141a;
   --secondary-foreground: #f5f5f7;
   --muted: #14141a;
   --muted-foreground: #86868b;
-  --accent: #00f0ff;
-  --accent-foreground: #030303;
-  --destructive: #ff4d4d;
+  --accent: #5e5ce6;
+  --accent-foreground: #f5f5f7;
+  --destructive: #ff375f;
   --border: rgba(245,245,247,0.08);
   --input: rgba(245,245,247,0.08);
-  --ring: rgba(0,240,255,0.4);
+  --ring: rgba(94,92,230,0.4);
 }
 
 @layer base {
@@ -70,9 +80,12 @@
   }
   body {
     font-family: var(--font-display), system-ui, sans-serif;
-    font-feature-settings: "ss01", "ss02";
+    font-feature-settings: "ss01", "ss02", "tnum";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+  code, .font-mono, kbd {
+    font-family: var(--font-mono), ui-monospace, monospace;
   }
 }
 
@@ -84,13 +97,19 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-stopped { overflow: hidden; }
 
 /* ============================================================
-   Typography Scale
+   Typography Scale (Expanded Vision)
    ============================================================ */
 .font-hero {
-  font-size: clamp(4rem, 18vw, 22rem);
+  font-size: clamp(5rem, 20vw, 24rem);
   font-weight: 900;
-  letter-spacing: -0.05em;
-  line-height: 0.85;
+  letter-spacing: -0.06em;
+  line-height: 0.82;
+}
+.font-h2 {
+  font-size: clamp(3rem, 8vw, 10rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
 }
 .font-body-display {
   font-size: clamp(2rem, 5vw, 6rem);
@@ -99,11 +118,69 @@ html.lenis, html.lenis body { height: auto; }
   letter-spacing: -0.02em;
   line-height: 1.02;
 }
+.font-body {
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
 .font-ui {
   font-size: 0.875rem;
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* ============================================================
+   12-column fluid grid + 8px baseline
+   ============================================================ */
+.fluid-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1rem;
+  padding-inline: clamp(1.5rem, 5vw, 8rem);
+}
+.baseline > * { margin-bottom: 0; }
+
+/* ============================================================
+   Buttons — micro-interactions
+   ============================================================ */
+.btn-fluid {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--text-secondary);
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 999px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: border-color 0.4s cubic-bezier(0.16,1,0.3,1),
+              background-color 0.4s cubic-bezier(0.16,1,0.3,1),
+              transform 0.4s cubic-bezier(0.16,1,0.3,1),
+              gap 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.btn-fluid:hover {
+  border-color: transparent;
+  background: rgba(94, 92, 230, 0.1);
+  gap: 0.9rem;
+}
+.btn-fluid:hover .btn-arrow { transform: translateX(4px); }
+.btn-arrow { transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+
+/* ============================================================
+   Frosted glass blob (project island pre-shatter)
+   ============================================================ */
+.glass-blob {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(20, 20, 30, 0.45);
+  border: 1px solid rgba(245,245,247,0.12);
 }
 
 /* ============================================================
@@ -143,7 +220,7 @@ html.lenis, html.lenis body { height: auto; }
 
 /* Selection */
 ::selection {
-  background: var(--iridescent-cyan);
+  background: var(--indigo);
   color: var(--abyss);
 }
 
@@ -152,10 +229,10 @@ html.lenis, html.lenis body { height: auto; }
    ============================================================ */
 .fluid-fallback {
   background:
-    radial-gradient(120% 120% at 30% 20%, rgba(74,0,224,0.55) 0%, transparent 55%),
-    radial-gradient(120% 120% at 75% 80%, rgba(0,240,255,0.45) 0%, transparent 55%),
-    radial-gradient(80% 80% at 50% 50%, rgba(20,20,30,0.6) 0%, #030303 70%),
-    #030303;
+    radial-gradient(120% 120% at 30% 20%, rgba(94,92,230,0.55) 0%, transparent 55%),
+    radial-gradient(120% 120% at 75% 80%, rgba(10,132,255,0.45) 0%, transparent 55%),
+    radial-gradient(80% 80% at 50% 50%, rgba(20,20,30,0.6) 0%, #050507 70%),
+    #050507;
   animation: fluidShift 18s ease-in-out infinite alternate;
 }
 @keyframes fluidShift {

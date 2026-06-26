@@ -89,7 +89,7 @@ export default function AudioToggle() {
       data-cursor-label={audioEnabled ? "Mute" : "Sound"}
     >
       {audioEnabled ? (
-        <Volume2 className="h-4 w-4 text-[var(--iridescent-cyan)]" />
+        <Volume2 className="h-4 w-4 text-[var(--indigo)]" />
       ) : (
         <VolumeX className="h-4 w-4" />
       )}
@@ -102,7 +102,7 @@ export default function AudioToggle() {
           {[0, 1, 2, 3].map((i) => (
             <span
               key={i}
-              className="w-[2px] bg-[var(--iridescent-cyan)]"
+              className="w-[2px] bg-[var(--indigo)]"
               style={{
                 height: "100%",
                 animation: `eq 0.${6 + i}s ${i * 0.1}s ease-in-out infinite alternate`,

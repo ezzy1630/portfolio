@@ -79,11 +79,17 @@ export default function FluidSimulation({ resolutionScale }: Props) {
         uSim: { value: null as THREE.Texture | null },
         uTime: { value: 0 },
         uPartAmount: { value: 0 },
+        uVortex: { value: 0 },
+        uLattice: { value: 0 },
         uVoidAmount: { value: 0 },
         uGlassAmount: { value: 0 },
         uOrbitAmount: { value: 0 },
+        uImplode: { value: 0 },
+        uDrainBottom: { value: 0 },
         uResolution: { value: new THREE.Vector2(1, 1) },
         uVelocityBoost: { value: 0 },
+        uAccent: { value: new THREE.Vector3(0.04, 0.52, 1.0) },
+        uAccentHigh: { value: new THREE.Vector3(0.37, 0.36, 0.9) },
       },
     });
 
@@ -217,27 +223,71 @@ export default function FluidSimulation({ resolutionScale }: Props) {
 
     // ---------- 3. Update DISPLAY uniforms (R3F renders the mesh) ----------
     const p = state.scrollProgress;
+
+    // Act 1 (0-0.08): fluid parts horizontally; vortex rises after parting
     let part = 0;
-    if (p < 0.08) part = p / 0.08;
-    else if (p < 0.14) part = 1 - (p - 0.08) / 0.06;
+    if (p < 0.05) part = p / 0.05;
+    else if (p < 0.10) part = 1 - (p - 0.05) / 0.05;
+    // vortex visible across Act 1 (0.02-0.08), peaks mid
+    let vortex = 0;
+    if (p > 0.02 && p < 0.09) {
+      vortex = Math.sin(Math.min(1, (p - 0.02) / 0.07) * Math.PI);
+    }
+
+    // Act 2 (0.08-0.25): upward current handled via uScrollForce; neural lattice on rest
+    let lattice = 0;
+    if (p > 0.08 && p < 0.25) {
+      // lattice strength ramps up after ~0.5s of resting
+      const restStrength = Math.min(1, state.restingTime / 0.5);
+      lattice = restStrength * (0.4 + 0.6 * Math.min(1, (p - 0.08) / 0.1));
+    }
+
+    // Act 3 (0.25-0.75): sphere gather per project
     let orbit = 0;
-    if (p > 0.38 && p < 0.45) orbit = (p - 0.38) / 0.07;
-    else if (p >= 0.45 && p < 0.78) orbit = 1;
-    else if (p >= 0.78 && p < 0.82) orbit = 1 - (p - 0.78) / 0.04;
+    if (p > 0.25 && p < 0.30) orbit = (p - 0.25) / 0.05;
+    else if (p >= 0.30 && p < 0.73) orbit = 1;
+    else if (p >= 0.73 && p < 0.75) orbit = 1 - (p - 0.73) / 0.02;
+
+    // Act 4 (0.75-0.90): drain to bottom
+    let drain = 0;
+    if (p > 0.74 && p < 0.82) drain = (p - 0.74) / 0.08;
+    else if (p >= 0.82 && p < 0.90) drain = 1;
+
+    // Act 5 (0.90-1.0): void + implosion to a single dot
     let voidAmt = 0;
-    if (p > 0.8) voidAmt = Math.min(1, (p - 0.8) / 0.08);
+    if (p > 0.88) voidAmt = Math.min(1, (p - 0.88) / 0.06);
+    let implode = 0;
+    if (p > 0.93) implode = Math.min(1, (p - 0.93) / 0.06);
+
     const glass = state.activeProject !== null ? 1 : 0;
 
-    displayMat.uniforms.uSim.value = read.texture;
-    displayMat.uniforms.uTime.value = time;
+    // accent color from store (per-project while in Act 3)
+    const acc = state.projectAccent;
     const du = displayMat.uniforms;
+    (du.uAccent.value as THREE.Vector3).set(acc.r, acc.g, acc.b);
+    (du.uAccentHigh.value as THREE.Vector3).set(acc.hr, acc.hg, acc.hb);
+
+    du.uSim.value = read.texture;
+    du.uTime.value = time;
     du.uPartAmount.value += (part - du.uPartAmount.value) * 0.12;
+    du.uVortex.value += (vortex - du.uVortex.value) * 0.1;
+    du.uLattice.value += (lattice - du.uLattice.value) * 0.12;
     du.uOrbitAmount.value += (orbit - du.uOrbitAmount.value) * 0.1;
+    du.uDrainBottom.value += (drain - du.uDrainBottom.value) * 0.1;
     du.uVoidAmount.value += (voidAmt - du.uVoidAmount.value) * 0.1;
+    du.uImplode.value += (implode - du.uImplode.value) * 0.12;
     du.uGlassAmount.value += (glass - du.uGlassAmount.value) * 0.18;
     du.uVelocityBoost.value = Math.min(1, state.scrollVelocity / 50);
 
-    // ---------- Drive DOM typography CSS vars ----------
+    // ---------- Resting-time accumulation (for Act 2 neural lattice) ----------
+    if (state.scrollVelocity < 1.5 && p > 0.08 && p < 0.25) {
+      const next = state.restingTime + dt;
+      if (next - state.restingTime > 0.1) {
+        useFluidStore.getState().set({ restingTime: next, isResting: true });
+      }
+    }
+
+    // ---------- Drive DOM typography CSS vars + accent ----------
     cssAcc.current += dt;
     if (cssAcc.current > 0.05) {
       cssAcc.current = 0;
@@ -249,6 +299,14 @@ export default function FluidSimulation({ resolutionScale }: Props) {
         "--font-weight-var",
         `${400 + Math.round(v * 500)}`
       );
+      // accent CSS vars (for DOM tinting in Act 3)
+      root.style.setProperty("--accent-r", acc.r.toFixed(3));
+      root.style.setProperty("--accent-g", acc.g.toFixed(3));
+      root.style.setProperty("--accent-b", acc.b.toFixed(3));
+      const hex = `#${[acc.r, acc.g, acc.b]
+        .map((n) => Math.round(n * 255).toString(16).padStart(2, "0"))
+        .join("")}`;
+      root.style.setProperty("--accent", hex);
     }
   });
 

@@ -4,21 +4,21 @@ import { useFluidStore } from "@/lib/store";
 import { HERO } from "@/lib/content";
 
 /**
- * ACT 1 — THE GENESIS (scroll 0% → ~14%)
- * The fluid splits horizontally and the hero name rises through a
- * clip-path curtain reveal, synced to the fluid's uPartAmount.
+ * ACT 1 — THE GENESIS (scroll 0% → ~8%)
+ * Fluid rushes in and parts; "EZZY RAPPEPORT" rises through a clip-path
+ * curtain; the thesis fades in beneath. The fluid sim renders a central
+ * codebase-character vortex (uVortex) during this act.
  */
 export default function Act1Genesis() {
   const p = useFluidStore((s) => s.scrollProgress);
 
-  // local act progress 0..1 across 0 -> 0.14
-  const local = Math.min(1, Math.max(0, p / 0.14));
-  // reveal ramps with the fluid parting (0 -> 0.08), holds, then fades out
-  const reveal = Math.min(1, p / 0.08);
-  const exit = Math.max(0, (p - 0.11) / 0.03); // fade 0.11 -> 0.14
+  const reveal = Math.min(1, p / 0.05);
+  const exit = Math.max(0, (p - 0.07) / 0.03);
   const opacity = Math.max(0, reveal - exit);
-  // curtain: inset 50% -> 0% as reveal goes 0 -> 1
   const inset = 50 * (1 - reveal);
+
+  // thesis appears after the name is mostly revealed
+  const thesisOpacity = Math.max(0, Math.min(1, (p - 0.03) / 0.03) - exit);
 
   return (
     <section
@@ -33,26 +33,33 @@ export default function Act1Genesis() {
           WebkitClipPath: `inset(${inset}% 0 ${inset}% 0)`,
           color: "var(--text-primary)",
           textShadow:
-            "0 0 40px rgba(0,240,255,0.25), 0 0 80px rgba(74,0,224,0.2)",
+            "0 0 40px rgba(94,92,230,0.35), 0 0 80px rgba(94,92,230,0.2)",
         }}
       >
         {HERO.name}
       </div>
 
       <div
-        className="mt-8 font-ui text-[var(--text-secondary)] transition-opacity duration-500"
-        style={{ opacity: reveal > 0.6 ? 1 : 0 }}
+        className="mt-6 md:mt-10 max-w-3xl text-center font-body text-[var(--text-secondary)] transition-opacity duration-500"
+        style={{ opacity: thesisOpacity }}
       >
-        {HERO.role} — {HERO.tagline}
+        {HERO.thesis}
+      </div>
+
+      <div
+        className="mt-8 font-ui text-[var(--text-secondary)] transition-opacity duration-500"
+        style={{ opacity: thesisOpacity }}
+      >
+        {HERO.role}
       </div>
 
       {/* scroll indicator */}
       <div
         className="absolute bottom-10 left-1/2 -translate-x-1/2 font-ui text-[var(--text-secondary)] flex flex-col items-center gap-2"
-        style={{ opacity: local < 0.5 ? 1 - local * 2 : 0 }}
+        style={{ opacity: p < 0.04 ? 1 - p * 25 : 0 }}
       >
         <span>Scroll to part the fluid</span>
-        <span className="block w-px h-12 bg-gradient-to-b from-[var(--iridescent-cyan)] to-transparent animate-pulse" />
+        <span className="block w-px h-12 bg-gradient-to-b from-[var(--indigo)] to-transparent animate-pulse" />
       </div>
     </section>
   );

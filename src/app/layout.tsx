@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -10,21 +10,32 @@ const display = Space_Grotesk({
   display: "swap",
 });
 
+const mono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Kinetic Fluid Canvas — Portfolio",
+  title: "Ezzy Rappeport — Kinetic Fluid Canvas",
   description:
-    "A real-time WebGL fluid portfolio. Built with Three.js, custom GLSL, GSAP and Lenis.",
+    "AI systems and consumer iOS software at scale. A real-time WebGL fluid portfolio.",
   keywords: [
-    "portfolio",
+    "Ezzy Rappeport",
+    "AI systems",
+    "iOS",
+    "SwiftUI",
+    "MonkeyClaw",
+    "FlowE",
+    "Argyph",
     "WebGL",
-    "Three.js",
     "fluid simulation",
-    "creative developer",
   ],
-  authors: [{ name: "Kinetic Fluid Canvas" }],
+  authors: [{ name: "Ezzy Rappeport" }],
   openGraph: {
-    title: "Kinetic Fluid Canvas — Portfolio",
-    description: "A real-time WebGL fluid portfolio.",
+    title: "Ezzy Rappeport — Kinetic Fluid Canvas",
+    description: "AI systems and consumer iOS software at scale.",
     type: "website",
   },
 };
@@ -37,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <body
-        className={`${display.variable} antialiased bg-[#030303] text-[#f5f5f7] overflow-x-hidden`}
+        className={`${display.variable} ${mono.variable} antialiased bg-[#050507] text-[#f5f5f7] overflow-x-hidden`}
       >
         {children}
         <Toaster />

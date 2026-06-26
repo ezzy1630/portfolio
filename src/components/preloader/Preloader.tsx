@@ -6,7 +6,8 @@ import { useFluidStore } from "@/lib/store";
 const STAGES = [
   "Compiling Shaders…",
   "Initializing Fluid…",
-  "Entering Abyss…",
+  "Entering the Abyss…",
+  "Loading Codebase…",
 ];
 
 /**
@@ -49,19 +50,19 @@ export default function Preloader() {
           className="absolute inset-0 rounded-full"
           style={{
             background:
-              "conic-gradient(from 0deg, var(--iridescent-violet), var(--iridescent-cyan), var(--iridescent-violet))",
+              "conic-gradient(from 0deg, var(--argyph), var(--monkeyclaw), var(--indigo), var(--flowe), var(--argyph))",
             filter: "blur(8px)",
             animation: "spin 1.4s linear infinite",
           }}
         />
         <div
           className="absolute inset-3 rounded-full"
-          style={{ background: "#030303" }}
+          style={{ background: "#050507" }}
         />
         <div
           className="absolute inset-0 rounded-full"
           style={{
-            borderTop: "2px solid var(--iridescent-cyan)",
+            borderTop: "2px solid var(--indigo)",
             animation: "spin 2s linear infinite reverse",
           }}
         />
@@ -74,7 +75,7 @@ export default function Preloader() {
       {/* progress bar */}
       <div className="mt-6 h-px w-48 bg-white/10 overflow-hidden">
         <div
-          className="h-full bg-[var(--iridescent-cyan)] transition-all duration-500"
+          className="h-full bg-[var(--indigo)] transition-all duration-500"
           style={{ width: `${((stage + 1) / STAGES.length) * 100}%` }}
         />
       </div>

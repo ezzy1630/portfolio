@@ -54,10 +54,14 @@ export function useLenisScroll(enabled: boolean) {
     lenis.on("scroll", (e: { progress: number; velocity: number; direction: number }) => {
       const v = Math.abs(e.velocity || 0);
       const dir = (e.direction || 0) as 1 | -1 | 0;
+      const moving = v > 1.5;
       useFluidStore.getState().set({
         scrollProgress: e.progress ?? 0,
         scrollVelocity: v,
         scrollDirection: dir,
+        // reset resting timer while moving; fluid sim bumps it forward each frame when idle
+        restingTime: moving ? 0 : useFluidStore.getState().restingTime,
+        isResting: !moving,
       });
       ScrollTrigger.update();
     });

@@ -1,16 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFluidStore } from "@/lib/store";
 import { PROJECTS } from "@/lib/content";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, ArrowUpRight } from "lucide-react";
+import { X, ArrowUpRight, Crosshair } from "lucide-react";
+import {
+  MonkeyClawCaseStudy,
+  FlowECaseStudy,
+  ArgyphCaseStudy,
+} from "@/components/casestudies";
+
+const CASE_STUDIES = [
+  <MonkeyClawCaseStudy key="mc" />,
+  <FlowECaseStudy key="fl" />,
+  <ArgyphCaseStudy key="ar" />,
+];
 
 /**
- * ACT 3 — THE ISLANDS (scroll ~40% → ~80%)
- * The fluid gathers into a central sphere (driven by uOrbitAmount).
- * Each project is an "island". Scrolling cycles through projects;
- * clicking the sphere expands a glass case-study overlay.
+ * ACT 3 — THE EXECUTION ISLANDS (scroll ~25% → ~75%)
+ * Three project "islands". The fluid gathers into a central sphere whose
+ * accent color shifts per active project as the user scrolls. Clicking an
+ * island shatters the fluid into glass mode and expands a rich case study.
  */
 export default function Act3Islands() {
   const p = useFluidStore((s) => s.scrollProgress);
@@ -18,16 +29,32 @@ export default function Act3Islands() {
   const setActiveProject = useFluidStore((s) => s.set);
   const [hovered, setHovered] = useState(false);
 
-  const start = 0.4;
-  const end = 0.8;
+  const start = 0.25;
+  const end = 0.75;
   const local = Math.min(1, Math.max(0, (p - start) / (end - start)));
 
-  const inOpacity = Math.min(1, Math.max(0, (p - 0.38) / 0.025));
+  const inOpacity = Math.min(1, Math.max(0, (p - 0.24) / 0.02));
   const outOpacity = Math.min(1, Math.max(0, (end - p) / 0.02));
   const opacity = Math.min(inOpacity, outOpacity);
 
   const idx = Math.min(PROJECTS.length - 1, Math.floor(local * PROJECTS.length));
   const project = PROJECTS[idx];
+
+  // drive the store's accent color so the fluid + DOM tint matches the active project
+  useEffect(() => {
+    const a = project.accent;
+    useFluidStore.getState().set({
+      activeProjectId: project.id,
+      projectAccent: {
+        r: a.base[0],
+        g: a.base[1],
+        b: a.base[2],
+        hr: a.highlight[0],
+        hg: a.highlight[1],
+        hb: a.highlight[2],
+      },
+    });
+  }, [project]);
 
   const isOpen = activeProject !== null;
 
@@ -35,41 +62,44 @@ export default function Act3Islands() {
     <section
       className="fixed inset-0 z-10 flex items-center justify-center pointer-events-none"
       style={{ opacity }}
-      aria-label="Islands"
+      aria-label="Execution Islands"
     >
-      {/* Sphere (clickable) */}
+      {/* The island sphere */}
       <button
         type="button"
         aria-label={`Open ${project.title}`}
         onClick={() => setActiveProject({ activeProject: idx })}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        data-cursor-label="EXPAND"
         className="group relative flex items-center justify-center rounded-full transition-transform duration-500"
         style={{
           pointerEvents: opacity > 0.3 ? "auto" : "none",
-          width: "min(46vmin, 420px)",
-          height: "min(46vmin, 420px)",
-          transform: `scale(${hovered ? 1.05 : 1}) ${isOpen ? "scale(1.4)" : ""}`,
-          background:
-            "radial-gradient(circle at 35% 30%, rgba(0,240,255,0.25), rgba(74,0,224,0.18) 45%, rgba(10,10,15,0.9) 75%)",
-          boxShadow:
-            "0 0 80px rgba(0,240,255,0.25), inset 0 0 60px rgba(74,0,224,0.3)",
-          backdropFilter: "blur(2px)",
-          border: "1px solid rgba(0,240,255,0.2)",
+          width: "min(46vmin, 440px)",
+          height: "min(46vmin, 440px)",
+          transform: `scale(${hovered ? 1.04 : 1}) ${isOpen ? "scale(1.4)" : ""}`,
+          background: `radial-gradient(circle at 35% 30%, ${project.accent.hex}40, ${project.accent.hexHighlight}25 45%, rgba(10,10,15,0.92) 75%)`,
+          boxShadow: `0 0 90px ${project.accent.hex}40, inset 0 0 70px ${project.accent.hexHighlight}30`,
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${project.accent.hex}40`,
         }}
       >
         {/* orbiting index ring */}
         <div
           className="absolute inset-0 rounded-full"
-          style={{
-            transform: `rotate(${local * 360}deg)`,
-          }}
+          style={{ transform: `rotate(${local * 360}deg)` }}
         >
           <span
-            className="absolute left-1/2 -translate-x-1/2 -top-3 font-ui text-[var(--iridescent-cyan)]"
-            style={{ textShadow: "0 0 12px rgba(0,240,255,0.6)" }}
+            className="absolute left-1/2 -translate-x-1/2 -top-3 font-ui"
+            style={{ color: project.accent.hex, textShadow: `0 0 12px ${project.accent.hex}` }}
           >
             {project.index}
+          </span>
+          <span
+            className="absolute left-1/2 -translate-x-1/2 -bottom-3 font-ui text-[var(--text-secondary)]"
+            style={{ transform: "rotate(180deg)" }}
+          >
+            {project.year}
           </span>
         </div>
 
@@ -78,118 +108,76 @@ export default function Act3Islands() {
           <span className="font-ui text-[var(--text-secondary)]">
             {project.category}
           </span>
-          <span className="font-body-display text-[var(--text-primary)] !text-[clamp(1.5rem,4vw,3rem)] leading-tight">
+          <span className="font-h2 !text-[clamp(1.8rem,5vw,4rem)] text-[var(--text-primary)] leading-none">
             {project.title}
           </span>
-          <span className="font-ui text-[var(--text-secondary)]">
-            {project.year}
+          <span className="font-ui text-[var(--text-secondary)] !text-[0.7rem] !tracking-[0.1em] normal-case max-w-[80%]">
+            {project.subtitle}
           </span>
         </div>
 
-        {/* hover hint */}
+        {/* hover crosshair hint */}
         <span
-          className="absolute -bottom-8 font-ui text-[var(--text-secondary)] transition-opacity duration-300"
+          className="absolute -bottom-9 font-ui text-[var(--text-secondary)] flex items-center gap-1.5 transition-opacity duration-300"
           style={{ opacity: hovered ? 1 : 0.5 }}
         >
-          Click to open
+          <Crosshair className="h-3 w-3" />
+          {hovered ? "EXPAND" : "Click to expand"}
         </span>
       </button>
 
-      {/* progress dots */}
+      {/* project progress dots */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-2">
         {PROJECTS.map((pr, i) => (
           <span
             key={pr.id}
             className="h-1 rounded-full transition-all duration-500"
             style={{
-              width: i === idx ? 28 : 10,
+              width: i === idx ? 32 : 10,
               background:
-                i === idx
-                  ? "var(--iridescent-cyan)"
-                  : "rgba(134,134,139,0.4)",
+                i === idx ? project.accent.hex : "rgba(134,134,139,0.4)",
             }}
           />
         ))}
       </div>
 
-      {/* Case study overlay */}
+      {/* Case study overlay (shatter + glass) */}
       <AnimatePresence>
         {isOpen && activeProject !== null && (
           <motion.div
             key="case"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.9, filter: "blur(8px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 0.9, filter: "blur(8px)" }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-auto fixed inset-0 z-20 flex items-center justify-center p-6 md:p-12"
+            className="pointer-events-auto fixed inset-0 z-20 flex items-center justify-center p-4 md:p-8"
             style={{
-              background: "rgba(3,3,5,0.55)",
-              backdropFilter: "blur(18px)",
+              background: "rgba(5,5,7,0.6)",
+              backdropFilter: "blur(20px)",
             }}
           >
-            <div
-              className="relative w-full max-w-3xl rounded-2xl p-8 md:p-12 fluid-scroll overflow-y-auto max-h-[85vh]"
+            <motion.div
+              initial={{ y: 30 }}
+              animate={{ y: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full max-w-5xl rounded-2xl overflow-hidden"
               style={{
                 background:
-                  "linear-gradient(160deg, rgba(20,20,30,0.85), rgba(10,10,15,0.95))",
-                border: "1px solid rgba(0,240,255,0.18)",
-                boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
+                  "linear-gradient(160deg, rgba(20,20,30,0.92), rgba(10,10,15,0.97))",
+                border: `1px solid ${PROJECTS[activeProject].accent.hex}30`,
+                boxShadow: `0 30px 90px rgba(0,0,0,0.7), 0 0 0 1px ${PROJECTS[activeProject].accent.hex}10`,
               }}
             >
               <button
                 type="button"
                 aria-label="Close case study"
                 onClick={() => setActiveProject({ activeProject: null })}
-                className="absolute right-5 top-5 rounded-full p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition"
+                className="absolute right-4 top-4 z-10 rounded-full p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition"
               >
                 <X className="h-5 w-5" />
               </button>
-
-              <div className="font-ui text-[var(--iridescent-cyan)] mb-3">
-                Project {PROJECTS[activeProject].index} / {PROJECTS.length}
-              </div>
-              <h2 className="font-body-display !text-[clamp(2rem,6vw,4.5rem)] text-[var(--text-primary)] mb-3">
-                {PROJECTS[activeProject].title}
-              </h2>
-              <div className="flex flex-wrap gap-x-6 gap-y-1 font-ui text-[var(--text-secondary)] mb-8">
-                <span>{PROJECTS[activeProject].category}</span>
-                <span>·</span>
-                <span>{PROJECTS[activeProject].year}</span>
-              </div>
-
-              <p className="text-[var(--text-primary)] text-lg md:text-xl leading-relaxed mb-8 max-w-2xl">
-                {PROJECTS[activeProject].summary}
-              </p>
-
-              <div className="mb-10">
-                <div className="font-ui text-[var(--text-secondary)] mb-3">
-                  Tech Stack
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {PROJECTS[activeProject].stack.map((s) => (
-                    <span
-                      key={s}
-                      className="rounded-full px-3 py-1 font-ui text-[var(--text-primary)]"
-                      style={{
-                        background: "rgba(0,240,255,0.08)",
-                        border: "1px solid rgba(0,240,255,0.2)",
-                      }}
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <a
-                href={PROJECTS[activeProject].link}
-                className="inline-flex items-center gap-2 rounded-full px-6 py-3 font-ui text-[var(--abyss)] transition hover:gap-3"
-                style={{ background: "var(--iridescent-cyan)" }}
-              >
-                View Live
-                <ArrowUpRight className="h-4 w-4" />
-              </a>
-            </div>
+              {CASE_STUDIES[activeProject]}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

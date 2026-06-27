@@ -32,6 +32,12 @@ const LINKEDIN = CONTACT.linkedin;
 
 const MAX_MESSAGE = 5000;
 
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+const smoothStep = (edge0: number, edge1: number, n: number) => {
+  const t = clamp01((n - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
+};
+
 interface Particle {
   id: number;
   dx: number;
@@ -72,13 +78,15 @@ export default function Act5Terminal() {
   const messageRef = useRef<HTMLTextAreaElement>(null);
   const copyBtnRef = useRef<HTMLButtonElement>(null);
 
-  // fade-in: opacity = clamp((progress - 0.89)/0.03)
-  const opacity = Math.min(1, Math.max(0, (p - 0.89) / 0.03));
+  const reveal = smoothStep(0.875, 0.95, p);
+  const opacity = reveal;
   const interactive = opacity > 0.3;
   const pointerEvents: "auto" | "none" = interactive ? "auto" : "none";
 
-  // central glowing dot expansion 0..1 across 0.89 -> 0.97
-  const dotScale = Math.min(1, Math.max(0, (p - 0.89) / 0.08));
+  // central glowing dot expansion 0..1 across the Act 4 -> Act 5 handoff
+  const dotScale = smoothStep(0.86, 0.97, p);
+  const contentY = (1 - reveal) * 12;
+  const contentScale = 0.96 + reveal * 0.04;
 
   // auto-grow the textarea to fit content (capped)
   useEffect(() => {
@@ -229,7 +237,11 @@ export default function Act5Terminal() {
       {/* content stack */}
       <div
         className="relative z-10 w-full max-w-3xl flex flex-col items-center"
-        style={{ pointerEvents }}
+        style={{
+          pointerEvents,
+          transform: `translate3d(0, ${contentY}vh, 0) scale(${contentScale})`,
+          transformOrigin: "50% 52%",
+        }}
       >
         <h2
           className="font-h2 text-center select-none"

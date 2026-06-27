@@ -6,6 +6,12 @@ import { Coins, Network, Workflow } from "lucide-react";
 
 const SHAPE_ICON = { coin: Coins, node: Network, pipeline: Workflow };
 
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+const smoothStep = (edge0: number, edge1: number, n: number) => {
+  const t = clamp01((n - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
+};
+
 /**
  * ACT 4 — THE CORE SYSTEM (scroll ~75% → ~90%)
  * The fluid drains to the bottom (uDrainBottom). A horizontally scrolling
@@ -18,11 +24,13 @@ export default function Act4CoreSystem() {
 
   const start = 0.75;
   const end = 0.9;
-  const local = Math.min(1, Math.max(0, (p - start) / (end - start)));
+  const local = clamp01((p - start) / (end - start));
 
-  const inOpacity = Math.min(1, Math.max(0, (p - 0.74) / 0.02));
-  const outOpacity = Math.min(1, Math.max(0, (end - p) / 0.02));
-  const opacity = Math.min(inOpacity, outOpacity);
+  const enter = smoothStep(0.735, 0.765, p);
+  const exit = smoothStep(0.855, 0.92, p);
+  const opacity = enter * (1 - exit);
+  const y = 8 * (1 - enter) - 12 * exit;
+  const scale = 0.985 + 0.015 * enter - 0.035 * exit;
 
   // horizontal translate driven by local progress
   const count = LEADERSHIP.length;
@@ -34,7 +42,11 @@ export default function Act4CoreSystem() {
   return (
     <section
       className="fixed inset-0 z-10 pointer-events-none"
-      style={{ opacity }}
+      style={{
+        opacity,
+        transform: `translate3d(0, ${y}vh, 0) scale(${scale})`,
+        transformOrigin: "50% 48%",
+      }}
       aria-label="Core System"
     >
       <div className="absolute top-[clamp(2.75rem,7vh,5.5rem)] left-1/2 z-10 w-full -translate-x-1/2 px-6 text-center">

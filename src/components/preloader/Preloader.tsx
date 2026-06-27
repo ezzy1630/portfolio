@@ -37,11 +37,11 @@ export default function Preloader() {
     const interval = window.setInterval(() => {
       setBootProgress((current) => {
         const assetProgress = Number.isFinite(progress) ? progress : 0;
-        const increment = active ? 1.4 : 4.8;
+        const increment = active ? 2.4 : 8.5;
         const syntheticFloor = Math.min(100, current + increment);
         return Math.max(assetProgress, syntheticFloor);
       });
-    }, 120);
+    }, 80);
 
     return () => window.clearInterval(interval);
   }, [active, progress]);

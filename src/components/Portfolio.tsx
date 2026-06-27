@@ -32,6 +32,7 @@ export default function Portfolio() {
   const gpuTier = useFluidStore((s) => s.gpuTier);
   const reducedMotion = useFluidStore((s) => s.reducedMotion);
   const isTouch = useFluidStore((s) => s.isTouch);
+  const activeProject = useFluidStore((s) => s.activeProject);
 
   useMouseTracker(booted && !isTouch);
   useLenisScroll(booted);
@@ -60,18 +61,24 @@ export default function Portfolio() {
 
       {/* Chrome */}
       <CustomCursor />
-      <ProgressNav />
-      <AudioToggle />
+      {activeProject === null && (
+        <>
+          <ProgressNav />
+          <AudioToggle />
+        </>
+      )}
 
       {/* Top-left wordmark */}
-      <div className="fixed top-6 left-6 md:top-8 md:left-8 z-50 font-ui text-[10px] text-[var(--text-secondary)]">
-        <span className="text-[var(--text-primary)]">EZZY</span> · RAPPEPORT
-        {gpuTier !== "high" && (
-          <span className="ml-2 text-[var(--text-secondary)]/60">
-            [{gpuTier}]
-          </span>
-        )}
-      </div>
+      {activeProject === null && (
+        <div className="fixed top-6 left-6 md:top-8 md:left-8 z-50 font-ui text-[10px] text-[var(--text-secondary)]">
+          <span className="text-[var(--text-primary)]">EZZY</span> · RAPPEPORT
+          {gpuTier !== "high" && (
+            <span className="ml-2 text-[var(--text-secondary)]/60">
+              [{gpuTier}]
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Scroll spacer — defines the 0..1 master progress range.
           Act mapping: 1:8% 2:17% 3:50% 4:15% 5:10% → 1000vh total. */}

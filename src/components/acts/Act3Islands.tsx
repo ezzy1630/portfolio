@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFluidStore } from "@/lib/store";
 import { PROJECTS } from "@/lib/content";
@@ -35,6 +35,12 @@ const CASE_STUDIES = [
     loading: CaseStudyLoading,
   }),
 ];
+
+const preloadCaseStudy = (index: number) => {
+  if (index === 0) return import("@/components/casestudies/MonkeyClawCaseStudy");
+  if (index === 1) return import("@/components/casestudies/FlowECaseStudy");
+  return import("@/components/casestudies/ArgyphCaseStudy");
+};
 
 /**
  * ACT 3 — THE EXECUTION ISLANDS (scroll ~25% → ~75%)
@@ -78,6 +84,32 @@ export default function Act3Islands() {
   const isOpen = activeProject !== null;
   const shouldMountArtifact = opacity > 0.02 || isOpen;
   const ActiveCaseStudy = activeProject !== null ? CASE_STUDIES[activeProject] : null;
+  const openProject = useCallback(
+    (index: number) => {
+      void preloadCaseStudy(index);
+      setActiveProject({ activeProject: index });
+    },
+    [setActiveProject],
+  );
+
+  useEffect(() => {
+    const preload = () => {
+      void import("@/components/artifacts/ProjectArtifact");
+      PROJECTS.forEach((_, index) => void preloadCaseStudy(index));
+    };
+    const idle = (
+      window as typeof window & {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+        cancelIdleCallback?: (id: number) => void;
+      }
+    );
+    if (idle.requestIdleCallback) {
+      const id = idle.requestIdleCallback(preload, { timeout: 2400 });
+      return () => idle.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(preload, 900);
+    return () => window.clearTimeout(id);
+  }, []);
 
   return (
     <section
@@ -89,15 +121,15 @@ export default function Act3Islands() {
       <button
         type="button"
         aria-label={`Open ${project.title}`}
-        onClick={() => setActiveProject({ activeProject: idx })}
+        onClick={() => openProject(idx)}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         data-cursor-label="EXPAND"
         className="group relative flex items-center justify-center rounded-full transition-transform duration-500"
         style={{
           pointerEvents: opacity > 0.3 ? "auto" : "none",
-          width: "clamp(260px, 46vmin, 440px)",
-          height: "clamp(260px, 46vmin, 440px)",
+          width: "clamp(230px, 42vmin, 390px)",
+          height: "clamp(230px, 42vmin, 390px)",
           transform: `scale(${hovered ? 1.04 : 1}) ${isOpen ? "scale(1.4)" : ""}`,
           background: `radial-gradient(circle at 50% 50%, ${project.accent.hex}18, transparent 64%)`,
           boxShadow: `0 0 90px ${project.accent.hex}30`,
@@ -140,7 +172,7 @@ export default function Act3Islands() {
           <span className="font-ui text-[var(--text-secondary)]">
             {project.category}
           </span>
-          <span className="font-h2 !text-[clamp(1.35rem,5vw,4rem)] text-[var(--text-primary)] leading-none">
+          <span className="max-w-[min(82vw,540px)] font-h2 !text-[clamp(1.45rem,4.4vw,3.55rem)] text-[var(--text-primary)] leading-none break-words">
             {project.title}
           </span>
           <span className="font-ui text-[var(--text-secondary)] !text-[0.7rem] !tracking-[0.1em] normal-case max-w-[80%]">
@@ -182,9 +214,9 @@ export default function Act3Islands() {
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, scale: 0.9, filter: "blur(8px)" }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-auto fixed inset-0 z-20 flex items-center justify-center p-4 md:p-8"
+            className="pointer-events-auto fixed inset-0 z-[80] overflow-y-auto p-3 pt-14 sm:p-6 md:p-8"
             style={{
-              background: "rgba(5,5,7,0.6)",
+              background: "rgba(5,5,7,0.86)",
               backdropFilter: "blur(20px)",
             }}
           >
@@ -192,7 +224,7 @@ export default function Act3Islands() {
               initial={{ y: 30 }}
               animate={{ y: 0 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-5xl rounded-2xl overflow-hidden"
+              className="relative mx-auto my-0 w-full max-w-6xl overflow-hidden rounded-xl"
               style={{
                 background:
                   "linear-gradient(160deg, rgba(20,20,30,0.92), rgba(10,10,15,0.97))",
@@ -200,14 +232,20 @@ export default function Act3Islands() {
                 boxShadow: `0 30px 90px rgba(0,0,0,0.7), 0 0 0 1px ${PROJECTS[activeProject].accent.hex}10`,
               }}
             >
-              <button
-                type="button"
-                aria-label="Close case study"
-                onClick={() => setActiveProject({ activeProject: null })}
-                className="absolute right-4 top-4 z-10 rounded-full p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-[#090910]/90 px-4 py-3 backdrop-blur md:px-6">
+                <div className="font-ui text-[10px] text-[var(--text-secondary)]">
+                  {PROJECTS[activeProject].index} / {PROJECTS[activeProject].title}
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close case study"
+                  onClick={() => setActiveProject({ activeProject: null })}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 font-ui text-[10px] text-[var(--text-secondary)] transition hover:border-white/20 hover:bg-white/[0.08] hover:text-[var(--text-primary)]"
+                >
+                  Close
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
               {ActiveCaseStudy && <ActiveCaseStudy />}
             </motion.div>
           </motion.div>

@@ -200,6 +200,17 @@ html.lenis, html.lenis body { height: auto; }
   border-radius: 999px;
 }
 
+.case-study-content {
+  min-height: min(760px, calc(100vh - 7rem));
+}
+
+@media (max-width: 640px) {
+  .case-study-content .font-body {
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+}
+
 /* ============================================================
    Clip-path reveal for hero text (curtain)
    ============================================================ */

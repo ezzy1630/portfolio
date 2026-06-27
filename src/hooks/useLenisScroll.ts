@@ -43,11 +43,21 @@ export function useLenisScroll(enabled: boolean) {
       return () => window.removeEventListener("scroll", onScroll);
     }
 
+    const syncFromWindow = () => {
+      const limit = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = limit > 0 ? window.scrollY / limit : 0;
+      useFluidStore.getState().set({
+        scrollProgress: progress,
+        scrollVelocity: 0,
+        scrollDirection: 0,
+      });
+    };
+
     lenis = new Lenis({
-      lerp: 0.07,
-      wheelMultiplier: 1,
+      lerp: 0.12,
+      wheelMultiplier: 0.72,
       smoothWheel: true,
-      touchMultiplier: 1.2,
+      touchMultiplier: 0.9,
     });
     setLenis(lenis);
 
@@ -77,6 +87,8 @@ export function useLenisScroll(enabled: boolean) {
     // recalc on resize
     const onResize = () => ScrollTrigger.refresh();
     window.addEventListener("resize", onResize);
+    syncFromWindow();
+    rafId = requestAnimationFrame(syncFromWindow);
 
     return () => {
       gsap.ticker.remove(tickerFn);

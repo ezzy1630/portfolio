@@ -16,7 +16,8 @@ type CursorState = "default" | "fluid" | "link";
 export default function CustomCursor() {
   const isTouch = useFluidStore((s) => s.isTouch);
   const reducedMotion = useFluidStore((s) => s.reducedMotion);
-  const enabled = !isTouch && !reducedMotion;
+  const activeProject = useFluidStore((s) => s.activeProject);
+  const enabled = !isTouch && !reducedMotion && activeProject === null;
 
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);

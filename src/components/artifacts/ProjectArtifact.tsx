@@ -543,7 +543,7 @@ export default function ProjectArtifact({
 }: ProjectArtifactProps) {
   const gpuTier = useFluidStore((s) => s.gpuTier);
   const reducedMotion = useFluidStore((s) => s.reducedMotion);
-  const dprMax = gpuTier === "high" ? 1.35 : 1;
+  const dprMax = gpuTier === "high" ? 1.15 : 1;
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-[-14%]">

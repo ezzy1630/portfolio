@@ -63,7 +63,7 @@ export default function MonkeyClawCaseStudy() {
 
   return (
     <div
-      className="fluid-scroll overflow-y-auto max-h-[85vh] p-6 md:p-10"
+      className="case-study-content p-5 sm:p-6 md:p-10"
       style={
         {
           "--accent": ACCENT,
@@ -74,11 +74,11 @@ export default function MonkeyClawCaseStudy() {
       <div className="space-y-12">
         {/* ───────────── HEADER ───────────── */}
         <header className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <span className="font-ui text-[var(--accent)]">/ {project.index}</span>
             <Badge
               variant="outline"
-              className="font-ui border-[rgba(255,55,95,0.4)] bg-[rgba(255,55,95,0.08)] text-[var(--text-primary)]"
+              className="max-w-full whitespace-normal text-left font-ui leading-relaxed border-[rgba(255,55,95,0.4)] bg-[rgba(255,55,95,0.08)] text-[var(--text-primary)]"
             >
               <Zap className="h-3 w-3 text-[var(--accent)]" />
               {project.badge}

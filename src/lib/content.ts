@@ -7,7 +7,7 @@ export const HERO = {
   name: "EZZY RAPPEPORT",
   role: "AI Systems · iOS Software · Cognitive Science",
   thesis:
-    "Building AI systems and consumer iOS software at scale. 246K-line iOS app, solo; 1st place at the 2026 NVIDIA × ASUS Hackathon for a multi-agent AI security platform.",
+    "Building AI systems and consumer iOS software at scale. 300K+ line iOS app, solo; 1st place at the 2026 NVIDIA × ASUS Hackathon for a multi-agent AI security platform.",
   tagline: "Building AI systems and consumer iOS software at scale.",
 };
 
@@ -82,7 +82,7 @@ export const PROJECTS: Project[] = [
     subtitle: "iOS Student Productivity App · flowe.cc",
     category: "Consumer iOS",
     year: "2025",
-    badge: "Solo Developer · 246K LOC",
+    badge: "Solo Developer · 300K+ LOC",
     accent: {
       base: [0.04, 0.52, 1.0], // #0A84FF Apple blue
       highlight: [0.37, 0.36, 0.9], // #5E5CE6 indigo
@@ -101,7 +101,7 @@ export const PROJECTS: Project[] = [
       "OpenRouter",
     ],
     summary:
-      "A 246K-line SwiftUI iOS app with a local-first AI layer, a constraint-based scheduling engine, and bidirectional sync across Canvas LMS, EventKit, and Google Calendar.",
+      "A 300K+ line SwiftUI iOS app with a local-first AI layer, a constraint-based scheduling engine, and bidirectional sync across Canvas LMS, EventKit, and Google Calendar.",
     link: "https://flowe.cc",
   },
   {
@@ -162,7 +162,7 @@ export const MONKEYCLAW_STATS = [
 ];
 
 export const FLOWE_STATS = [
-  { label: "Lines of Code", value: "246,000", unit: "Swift" },
+  { label: "Lines of Code", value: "300K+", unit: "Swift" },
   { label: "Services", value: "100", unit: "+" },
   { label: "Maintainers", value: "1", unit: "solo" },
   { label: "Test Suite", value: "175", unit: "tests" },

@@ -18,12 +18,15 @@ export default function FluidCanvas() {
   // Fallback: CSS-only liquid gradient (mobile / no WebGL / reduced motion)
   if (renderMode === "fallback" || reducedMotion) {
     return (
-      <div className="fluid-fallback pointer-events-none fixed inset-0 z-0" />
+      <div
+        data-fluid-canvas
+        className="fluid-fallback pointer-events-none fixed inset-0 z-0"
+      />
     );
   }
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-0">
+    <div data-fluid-canvas className="pointer-events-none fixed inset-0 z-0">
       <Canvas
         gl={{
           antialias: false,

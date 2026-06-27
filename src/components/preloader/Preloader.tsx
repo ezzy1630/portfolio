@@ -1,86 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useProgress } from "@react-three/drei";
 import { useFluidStore } from "@/lib/store";
+import BootLoader from "./BootLoader";
 
-const STAGES = [
-  "Compiling Shaders…",
-  "Initializing Fluid…",
-  "Entering the Abyss…",
-  "Loading Codebase…",
-];
+function subscribeMounted() {
+  return () => undefined;
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
 
 /**
- * WebGL preloader overlay. Cycles loading messages while the fluid
- * canvas boots, then fades out and flips the store's isLoaded flag.
+ * Bridges R3F/Drei asset progress into the EzzyOS boot terminal.
+ * Shader compilation is not fully visible to THREE.LoadingManager, so a
+ * small boot floor keeps the terminal alive long enough to cover first paint.
  */
 export default function Preloader() {
   const set = useFluidStore((s) => s.set);
-  const [stage, setStage] = useState(0);
-  const [hidden, setHidden] = useState(false);
+  const { active, progress } = useProgress();
+  const mounted = useSyncExternalStore(
+    subscribeMounted,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
+  const [visible, setVisible] = useState(true);
+  const [bootProgress, setBootProgress] = useState(0);
 
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    STAGES.forEach((_, i) => {
-      timers.push(setTimeout(() => setStage(i), i * 700));
-    });
-    timers.push(
-      setTimeout(() => {
-        setHidden(true);
-        set({ isLoaded: true });
-      }, STAGES.length * 700 + 500)
-    );
-    return () => timers.forEach(clearTimeout);
+    const interval = window.setInterval(() => {
+      setBootProgress((current) => {
+        const assetProgress = Number.isFinite(progress) ? progress : 0;
+        const increment = active ? 1.4 : 4.8;
+        const syntheticFloor = Math.min(100, current + increment);
+        return Math.max(assetProgress, syntheticFloor);
+      });
+    }, 120);
+
+    return () => window.clearInterval(interval);
+  }, [active, progress]);
+
+  const onComplete = useCallback(() => {
+    set({ isLoaded: true });
+    setVisible(false);
   }, [set]);
 
-  if (hidden) return null;
+  if (!mounted || !visible) return null;
 
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex flex-col items-center justify-center transition-opacity duration-700"
-      style={{
-        background:
-          "radial-gradient(circle at 50% 50%, #0a0a0f 0%, #030303 70%)",
-        opacity: stage >= STAGES.length - 1 ? 0 : 1,
-      }}
-    >
-      {/* vortex */}
-      <div className="relative h-32 w-32 mb-10">
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            background:
-              "conic-gradient(from 0deg, var(--argyph), var(--monkeyclaw), var(--indigo), var(--flowe), var(--argyph))",
-            filter: "blur(8px)",
-            animation: "spin 1.4s linear infinite",
-          }}
-        />
-        <div
-          className="absolute inset-3 rounded-full"
-          style={{ background: "#050507" }}
-        />
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            borderTop: "2px solid var(--indigo)",
-            animation: "spin 2s linear infinite reverse",
-          }}
-        />
-      </div>
+  const displayProgress =
+    !active && bootProgress >= 100 ? 100 : Math.min(99, bootProgress);
 
-      <div className="font-ui text-[var(--text-primary)] tracking-[0.3em]">
-        {STAGES[stage]}
-      </div>
-
-      {/* progress bar */}
-      <div className="mt-6 h-px w-48 bg-white/10 overflow-hidden">
-        <div
-          className="h-full bg-[var(--indigo)] transition-all duration-500"
-          style={{ width: `${((stage + 1) / STAGES.length) * 100}%` }}
-        />
-      </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg);} }`}</style>
-    </div>
-  );
+  return <BootLoader progress={displayProgress} onComplete={onComplete} />;
 }

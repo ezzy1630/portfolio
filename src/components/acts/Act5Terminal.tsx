@@ -205,6 +205,7 @@ export default function Act5Terminal() {
 
   return (
     <section
+      id="contact"
       className="fixed inset-0 z-20 flex flex-col items-center justify-center px-6 pointer-events-none"
       style={{ opacity }}
       aria-label="The Terminal — contact"

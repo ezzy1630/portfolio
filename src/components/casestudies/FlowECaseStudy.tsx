@@ -3,7 +3,7 @@
 /**
  * FlowE Case Study — Act 3 Execution Island #02
  *
- * iOS Student Productivity App — 246K LOC, solo.
+ * iOS Student Productivity App — 300K+ LOC, solo.
  * - Animated LOC count-up
  * - High-fidelity SwiftUI phone mockup with 3D tilt
  * - Interactive hotspots (Brain Dump → structured tasks)
@@ -109,9 +109,9 @@ export default function FlowECaseStudy() {
   const [count, setCount] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState<HotspotId>(null);
 
-  const target = 246_000;
+  const target = 300_000;
 
-  // Count-up to 246,000 on mount (easeOutCubic, ~1.8s)
+  // Count-up to 300,000+ on mount (easeOutCubic, ~1.8s)
   useEffect(() => {
     const duration = 1800;
     const startTs = performance.now();
@@ -175,7 +175,7 @@ export default function FlowECaseStudy() {
                 textShadow: `0 0 32px ${ACCENT}33`,
               }}
             >
-              {count.toLocaleString()}
+              {count >= target ? "300K+" : count.toLocaleString()}
             </motion.span>
             <span className="font-ui text-[var(--accent)]">LINES OF SWIFT</span>
           </div>

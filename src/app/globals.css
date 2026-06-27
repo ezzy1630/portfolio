@@ -242,3 +242,25 @@ html.lenis, html.lenis body { height: auto; }
 @media (prefers-reduced-motion: reduce) {
   .fluid-fallback { animation: none; }
 }
+
+.fluid-flowe-easter {
+  filter: saturate(1.35) brightness(1.12);
+}
+
+.fluid-flowe-easter::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(80% 80% at 50% 50%, rgba(10,132,255,0.28), transparent 62%),
+    linear-gradient(180deg, rgba(10,132,255,0.12), transparent 38%, rgba(10,132,255,0.08));
+  mix-blend-mode: screen;
+  animation: floweConsolePulse 3s var(--ease-act) both;
+}
+
+@keyframes floweConsolePulse {
+  0% { opacity: 0; }
+  16% { opacity: 1; }
+  100% { opacity: 0; }
+}

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useDeviceCapabilities } from "@/hooks/useDeviceCapabilities";
 import { useMouseTracker } from "@/hooks/useMouseTracker";
 import { useLenisScroll } from "@/hooks/useLenisScroll";
+import { useConsoleEasterEgg } from "@/hooks/useConsoleEasterEgg";
 import { useFluidStore } from "@/lib/store";
 import FluidCanvas from "@/components/fluid/FluidCanvas";
 import Act1Genesis from "@/components/acts/Act1Genesis";
@@ -34,6 +35,7 @@ export default function Portfolio() {
 
   useMouseTracker(booted && !isTouch);
   useLenisScroll(booted);
+  useConsoleEasterEgg();
 
   // Lock scroll until preloader is done for a clean entrance
   const isLoaded = useFluidStore((s) => s.isLoaded);

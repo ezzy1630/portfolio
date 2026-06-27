@@ -35,7 +35,7 @@ export default function Portfolio() {
   const activeProject = useFluidStore((s) => s.activeProject);
 
   useMouseTracker(booted && !isTouch);
-  useLenisScroll(booted);
+  useLenisScroll(booted && activeProject === null);
   useConsoleEasterEgg();
 
   // Lock scroll until preloader is done for a clean entrance

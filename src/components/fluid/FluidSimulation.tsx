@@ -23,6 +23,7 @@ interface Props {
  */
 export default function FluidSimulation({ resolutionScale }: Props) {
   const { gl, size, scene: r3fScene } = useThree();
+  const splatRadius = 0.00012;
 
   const rtA = useRef<THREE.WebGLRenderTarget | null>(null);
   const rtB = useRef<THREE.WebGLRenderTarget | null>(null);
@@ -67,7 +68,7 @@ export default function FluidSimulation({ resolutionScale }: Props) {
         uSim: { value: null as THREE.Texture | null },
         uPoint: { value: new THREE.Vector2(0.5, 0.5) },
         uVelocity: { value: new THREE.Vector2(0, 0) },
-        uRadius: { value: 0.00048 },
+        uRadius: { value: splatRadius },
         uInk: { value: 0.45 },
         uAspect: { value: 1 },
       },

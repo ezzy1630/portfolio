@@ -151,6 +151,7 @@ function destroyRuntime(runtime: WebGPURuntime | null) {
 
 function writeComputeUniform(runtime: WebGPURuntime, dt: number, time: number) {
   const state = useFluidStore.getState();
+  const forceRadius = state.isTouch ? 0.006 : 0.0018;
   const buffer = new ArrayBuffer(COMPUTE_UNIFORM_BYTES);
   const view = new DataView(buffer);
 
@@ -160,7 +161,7 @@ function writeComputeUniform(runtime: WebGPURuntime, dt: number, time: number) {
   view.setFloat32(12, 0.986, true);
   view.setFloat32(16, 0.976, true);
   view.setFloat32(20, 0.18, true);
-  view.setFloat32(24, state.isTouch ? 0.006 : 0.0038, true);
+  view.setFloat32(24, forceRadius, true);
   view.setFloat32(28, 4200, true);
   view.setFloat32(32, state.scrollVelocity * 0.052, true);
   view.setFloat32(40, state.mouseX * 0.5 + 0.5, true);

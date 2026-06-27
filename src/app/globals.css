@@ -187,6 +187,7 @@ html.lenis, html.lenis body { height: auto; }
    Utility: hide default cursor on capable devices
    ============================================================ */
 @media (hover: hover) and (pointer: fine) {
+  .has-custom-cursor, .has-custom-cursor * { cursor: none !important; }
   .cursor-none-fine, .cursor-none-fine * { cursor: none !important; }
 }
 

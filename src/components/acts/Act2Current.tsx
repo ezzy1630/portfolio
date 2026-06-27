@@ -17,7 +17,7 @@ export default function Act2Current() {
   const start = 0.08;
   const end = 0.25;
   const inOpacity = Math.min(1, Math.max(0, (p - 0.07) / 0.02));
-  const outOpacity = Math.min(1, Math.max(0, (end - p) / 0.02));
+  const outOpacity = Math.min(1, Math.max(0, (end - p) / 0.055));
   const opacity = Math.min(inOpacity, outOpacity);
 
   const local = Math.min(1, Math.max(0, (p - start) / (end - start)));

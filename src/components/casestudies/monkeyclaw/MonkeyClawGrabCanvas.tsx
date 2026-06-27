@@ -57,13 +57,13 @@ const GATES = [
 ] as const;
 
 const PH = {
-  descend: [0.04, 0.28],
-  grab: [0.28, 0.38],
-  lift: [0.38, 0.49],
-  form: [0.49, 0.66],
-  hold: [0.66, 0.78],
-  release: [0.78, 0.93],
-  rest: [0.93, 1.0],
+  descend: [0.1, 0.32],
+  grab: [0.32, 0.45],
+  lift: [0.45, 0.58],
+  form: [0.58, 0.74],
+  hold: [0.74, 0.86],
+  release: [0.86, 0.97],
+  rest: [0.97, 1.0],
 } as const;
 
 type SeedParticle = {
@@ -125,8 +125,8 @@ export default function MonkeyClawGrabCanvas({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reducedMotion = useFluidStore((s) => s.reducedMotion);
-  const seeds = useMemo(() => buildSeeds(148, 871), []);
-  const shatterSeeds = useMemo(() => buildSeeds(120, 1771), []);
+  const seeds = useMemo(() => buildSeeds(188, 871), []);
+  const shatterSeeds = useMemo(() => buildSeeds(144, 1771), []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -232,7 +232,7 @@ export default function MonkeyClawGrabCanvas({
     };
 
     const drawClaw = (x: number, y: number, open: number, alpha: number) => {
-      const prong = Math.min(width, height) * 0.055;
+      const prong = Math.min(width, height) * 0.074;
       const spread = lerp(0.12, 0.95, open);
       ctx.save();
       ctx.globalAlpha = alpha;
@@ -243,15 +243,27 @@ export default function MonkeyClawGrabCanvas({
       ctx.shadowColor = ACCENT;
       ctx.shadowBlur = 10;
 
+      const stemTop = -prong * 2.2;
       ctx.beginPath();
-      ctx.moveTo(0, -prong * 1.45);
+      ctx.moveTo(0, stemTop);
       ctx.lineTo(0, 0);
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.moveTo(-6, -prong * 1.45);
-      ctx.lineTo(6, -prong * 1.45);
+      ctx.moveTo(-8, stemTop);
+      ctx.lineTo(8, stemTop);
       ctx.stroke();
+
+      ctx.globalAlpha = alpha * 0.28;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo((i - 1) * 7, stemTop + 5);
+        ctx.quadraticCurveTo((i - 1) * 11, -prong * 1.1, (i - 1) * 4, -prong * 0.1);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 2;
 
       const tipX = Math.sin(spread) * prong;
       const tipY = Math.cos(spread) * prong;
@@ -270,13 +282,18 @@ export default function MonkeyClawGrabCanvas({
       ctx.beginPath();
       ctx.arc(0, 0, 2.7, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = ACCENT_HI;
+      ctx.globalAlpha = alpha * 0.42;
+      ctx.beginPath();
+      ctx.arc(0, 0, prong * 0.38, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.restore();
     };
 
     const drawFocusWell = (t: number, alpha: number) => {
       const cx = width * 0.5;
       const cy = height * 0.48;
-      const radius = Math.min(width, height) * 0.255;
+      const radius = Math.min(width, height) * 0.29;
 
       ctx.save();
       ctx.globalAlpha = alpha;
@@ -311,6 +328,26 @@ export default function MonkeyClawGrabCanvas({
         ctx.stroke();
       }
       ctx.setLineDash([]);
+
+      for (let i = 0; i < 10; i++) {
+        const a = i / 10 * Math.PI * 2 + t * 0.85;
+        const inner = radius * 0.34;
+        const outer = radius * (1.08 + Math.sin(t * 4 + i) * 0.04);
+        const gradient = ctx.createLinearGradient(
+          cx + Math.cos(a) * inner,
+          cy + Math.sin(a) * inner,
+          cx + Math.cos(a) * outer,
+          cy + Math.sin(a) * outer,
+        );
+        gradient.addColorStop(0, i % 2 === 0 ? "rgba(255,55,95,0.18)" : "rgba(0,240,255,0.16)");
+        gradient.addColorStop(1, "rgba(5,5,7,0)");
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+        ctx.lineTo(cx + Math.cos(a) * outer, cy + Math.sin(a) * outer);
+        ctx.stroke();
+      }
 
       ctx.restore();
     };
@@ -364,7 +401,7 @@ export default function MonkeyClawGrabCanvas({
       const railY = height * 0.82;
       const startX = width * 0.17;
       const endX = width * 0.83;
-      const active = clamp((t - 0.12) / 0.78);
+      const active = clamp((t - 0.18) / 0.76);
 
       ctx.save();
       ctx.globalAlpha = alpha;

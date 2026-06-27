@@ -47,6 +47,12 @@ const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
 const MONKEYCLAW_BEATS = [
   {
+    label: "Bridge handoff",
+    title: "Intent becomes an attack graph",
+    body: "The cognition stream condenses into a security system: agents, evidence, patches, and verification.",
+    evidence: "from human intent to agent execution",
+  },
+  {
     label: "Exploit search",
     title: "Red agent probes NemoClaw",
     body: "LoRA-tuned Nemotron searches for a concrete sandbox break, not a generic benchmark score.",
@@ -76,7 +82,23 @@ const MONKEYCLAW_BEATS = [
     body: "Eight gates light only when detection, telemetry, tests, and regression checks all agree.",
     evidence: "1000+ tests",
   },
+  {
+    label: "Signed off",
+    title: "Evidence survives the loop",
+    body: "The system earns the win only after patch, detection, telemetry, and regression checks line up.",
+    evidence: "1st place, NVIDIA x ASUS",
+  },
 ] as const;
+
+const PROJECT_SEGMENTS = [
+  { index: 0, start: 0, end: 0.46 },
+  { index: 1, start: 0.46, end: 0.74 },
+  { index: 2, start: 0.74, end: 1 },
+] as const;
+
+function getProjectSegment(local: number) {
+  return PROJECT_SEGMENTS.find((segment) => local < segment.end) ?? PROJECT_SEGMENTS[2];
+}
 
 /**
  * ACT 3 — THE EXECUTION ISLANDS (scroll ~25% → ~75%)
@@ -90,17 +112,19 @@ export default function Act3Islands() {
   const setActiveProject = useFluidStore((s) => s.set);
   const [hovered, setHovered] = useState(false);
 
-  const start = 0.25;
+  const start = 0.23;
   const end = 0.75;
   const local = Math.min(1, Math.max(0, (p - start) / (end - start)));
 
-  const inOpacity = Math.min(1, Math.max(0, (p - 0.24) / 0.02));
+  const inOpacity = Math.min(1, Math.max(0, (p - 0.215) / 0.055));
   const outOpacity = Math.min(1, Math.max(0, (end - p) / 0.02));
   const opacity = Math.min(inOpacity, outOpacity);
 
-  const idx = Math.min(PROJECTS.length - 1, Math.floor(local * PROJECTS.length));
+  const segment = getProjectSegment(local);
+  const idx = segment.index;
   const project = PROJECTS[idx];
-  const projectPhase = Math.min(1, Math.max(0, local * PROJECTS.length - idx));
+  const projectPhase = clamp01((local - segment.start) / (segment.end - segment.start));
+  const bridgeHandoff = project.id === "monkeyclaw" ? clamp01((p - 0.215) / 0.06) * clamp01((0.315 - p) / 0.05) : 0;
   const monkeyClawForgeOpacity =
     project.id === "monkeyclaw"
       ? clamp01(projectPhase / 0.06) * clamp01((1 - projectPhase) / 0.1)
@@ -194,6 +218,24 @@ export default function Act3Islands() {
                 "linear-gradient(90deg, rgba(5,5,7,0.78) 0%, rgba(5,5,7,0.2) 32%, transparent 50%, rgba(5,5,7,0.18) 67%, rgba(5,5,7,0.74) 100%), linear-gradient(0deg, rgba(5,5,7,0.78) 0%, transparent 26%, transparent 76%, rgba(5,5,7,0.45) 100%)",
             }}
           />
+          <div
+            className="absolute left-1/2 top-1/2 w-[min(78vw,980px)] -translate-x-1/2 -translate-y-1/2 text-center"
+            style={{
+              opacity: bridgeHandoff,
+              transform: `translate(-50%, -50%) scale(${1 + projectPhase * 0.04})`,
+              filter: `blur(${projectPhase * 10}px)`,
+            }}
+          >
+            <div className="font-body-display text-[clamp(2rem,5vw,5.8rem)] leading-none text-[rgba(245,245,247,0.14)]">
+              I bridge human intent and machine execution.
+            </div>
+            <div
+              className="mx-auto mt-5 h-px w-[min(52vw,620px)]"
+              style={{
+                background: `linear-gradient(90deg, transparent, ${PROJECTS[0].accent.hex}, ${PROJECTS[0].accent.hexHighlight}, transparent)`,
+              }}
+            />
+          </div>
           <div
             className="absolute left-[clamp(1.25rem,5vw,4.5rem)] top-[14vh] w-[min(31vw,430px)] max-md:left-5 max-md:right-5 max-md:top-20 max-md:w-auto"
             style={{
@@ -381,7 +423,7 @@ export default function Act3Islands() {
           style={{ opacity: hovered ? 1 : 0.5 }}
         >
           <Crosshair className="h-3 w-3" />
-          {hovered ? "EXPAND" : "Click to expand"}
+          {hovered ? "OPEN" : "Open case study"}
         </span>
       </button>
 

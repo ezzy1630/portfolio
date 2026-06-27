@@ -231,6 +231,35 @@ type RaymarchMaterial = THREE.ShaderMaterial & {
   };
 };
 
+interface DendriteBranch {
+  start: THREE.Vector3;
+  end: THREE.Vector3;
+  depth: number;
+}
+
+interface DendriteNode {
+  pos: THREE.Vector3;
+  depth: number;
+  branchIndex: number;
+}
+
+interface DendriteParticle {
+  branchIndex: number;
+  t: number;
+  speed: number;
+  dir: 1 | -1;
+}
+
+function seededRandom(seed = 42) {
+  let state = seed;
+  return () => {
+    state = (state * 16807) % 2147483647;
+    return (state - 1) / 2147483646;
+  };
+}
+
+const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+
 function OrbitParticleBand({
   hovered,
   count,
@@ -280,6 +309,278 @@ function OrbitParticleBand({
         opacity={hovered ? 0.96 : 0.82}
       />
     </instancedMesh>
+  );
+}
+
+function buildDendriteNetwork() {
+  const rand = seededRandom(91);
+  const branches: DendriteBranch[] = [];
+  const nodes: DendriteNode[] = [];
+
+  function grow(origin: THREE.Vector3, direction: THREE.Vector3, length: number, depth: number, maxDepth: number) {
+    if (depth > maxDepth || length < 0.035) return;
+
+    const dir = direction.clone().normalize();
+    const end = origin.clone().add(dir.clone().multiplyScalar(length));
+    const branchIndex = branches.length;
+    branches.push({ start: origin.clone(), end: end.clone(), depth });
+    nodes.push({ pos: end.clone(), depth, branchIndex });
+
+    if (depth >= maxDepth) return;
+
+    const splitCount = depth === 0 ? 3 : rand() > 0.62 ? 3 : 2;
+    const baseAngle = rand() * Math.PI * 2;
+
+    for (let i = 0; i < splitCount; i++) {
+      const next = dir.clone();
+      const up = Math.abs(dir.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+      const axis = new THREE.Vector3().crossVectors(dir, up).normalize();
+      const angle = baseAngle + (Math.PI * 2 * i) / splitCount + (rand() - 0.5) * 0.42;
+      axis.applyAxisAngle(dir, angle);
+      next.add(axis.multiplyScalar(0.34 + rand() * 0.44));
+      next.x += (rand() - 0.5) * 0.12;
+      next.y += (rand() - 0.5) * 0.08;
+      next.z += (rand() - 0.5) * 0.1;
+      next.normalize();
+      grow(end, next, length * (0.52 + rand() * 0.14), depth + 1, maxDepth);
+    }
+  }
+
+  [
+    new THREE.Vector3(1, 0.08, 0.02),
+    new THREE.Vector3(-1, 0.1, -0.03),
+    new THREE.Vector3(0.18, 0.96, 0.08),
+    new THREE.Vector3(-0.22, 0.92, -0.06),
+    new THREE.Vector3(0.58, -0.54, 0.16),
+    new THREE.Vector3(-0.58, -0.48, -0.18),
+  ].forEach((dir) => grow(new THREE.Vector3(0, 0, 0), dir, 0.82 + rand() * 0.14, 0, 4));
+
+  return { branches, nodes };
+}
+
+function argyphScrollEnvelope(scrollProgress: number) {
+  const actLocal = clamp01((scrollProgress - 0.25) / 0.5);
+  const argyphLocal = clamp01((actLocal - 2 / 3) * 3);
+  const grow = clamp01(argyphLocal / 0.58);
+  const retract = clamp01((1 - argyphLocal) / 0.28);
+  return Math.min(grow, retract);
+}
+
+function ArgyphDendriticArtifact({ hovered, expanded }: { hovered: boolean; expanded: boolean }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const branchRef = useRef<THREE.LineSegments>(null);
+  const nodeRef = useRef<THREE.InstancedMesh>(null);
+  const particleRef = useRef<THREE.Points>(null);
+  const coreRef = useRef<THREE.Mesh>(null);
+  const wireRef = useRef<THREE.Mesh>(null);
+  const wireOuterRef = useRef<THREE.Mesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const growthRef = useRef(0);
+
+  const { branches, nodes } = useMemo(() => buildDendriteNetwork(), []);
+  const particles = useMemo<DendriteParticle[]>(() => {
+    const rand = seededRandom(117);
+    return Array.from({ length: 72 }, () => ({
+      branchIndex: Math.floor(rand() * branches.length),
+      t: rand(),
+      speed: 0.12 + rand() * 0.34,
+      dir: rand() > 0.28 ? 1 : -1,
+    }));
+  }, [branches.length]);
+
+  const branchGeometry = useMemo(() => {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(branches.length * 6), 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(branches.length * 6), 3));
+    return geometry;
+  }, [branches.length]);
+
+  const particleGeometry = useMemo(() => {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(particles.length * 3), 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(particles.length * 3), 3));
+    return geometry;
+  }, [particles.length]);
+
+  useEffect(() => {
+    return () => {
+      branchGeometry.dispose();
+      particleGeometry.dispose();
+    };
+  }, [branchGeometry, particleGeometry]);
+
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+    gsap.killTweensOf(group.scale);
+    gsap.to(group.scale, {
+      x: expanded ? 1.24 : 1,
+      y: expanded ? 1.24 : 1,
+      z: expanded ? 1.24 : 1,
+      duration: 0.45,
+      ease: "power3.out",
+    });
+  }, [expanded]);
+
+  useFrame((state, delta) => {
+    const group = groupRef.current;
+    const branchMesh = branchRef.current;
+    const nodeMesh = nodeRef.current;
+    const particleMesh = particleRef.current;
+    if (!group || !branchMesh || !nodeMesh || !particleMesh) return;
+
+    const fluid = useFluidStore.getState();
+    const elapsed = state.clock.elapsedTime;
+    const target = fluid.reducedMotion ? 1 : argyphScrollEnvelope(fluid.scrollProgress);
+    growthRef.current += (target - growthRef.current) * (fluid.reducedMotion ? 1 : 0.055);
+    const growth = growthRef.current;
+
+    group.rotation.y = Math.sin(elapsed * 0.12) * 0.035 + fluid.scrollVelocity * 0.000025;
+    group.rotation.x = -0.06 + Math.sin(elapsed * 0.1) * 0.025;
+    group.rotation.z = -0.08 + (growth - 0.5) * 0.12;
+
+    const positions = branchMesh.geometry.getAttribute("position").array as Float32Array;
+    const colors = branchMesh.geometry.getAttribute("color").array as Float32Array;
+
+    for (let i = 0; i < branches.length; i++) {
+      const branch = branches[i];
+      const segment = clamp01((growth - branch.depth * 0.13) / 0.62);
+      const shimmer = fluid.reducedMotion ? 0.78 : 0.72 + Math.sin(elapsed * 1.35 + i * 0.37) * 0.18;
+      const brightness = Math.max(0, (1 - branch.depth * 0.14) * shimmer * segment);
+
+      positions[i * 6] = branch.start.x;
+      positions[i * 6 + 1] = branch.start.y;
+      positions[i * 6 + 2] = branch.start.z;
+      positions[i * 6 + 3] = branch.start.x + (branch.end.x - branch.start.x) * segment;
+      positions[i * 6 + 4] = branch.start.y + (branch.end.y - branch.start.y) * segment;
+      positions[i * 6 + 5] = branch.start.z + (branch.end.z - branch.start.z) * segment;
+
+      colors[i * 6] = brightness * 1.0;
+      colors[i * 6 + 1] = brightness * 0.68;
+      colors[i * 6 + 2] = brightness * 0.22;
+      colors[i * 6 + 3] = brightness * 1.0;
+      colors[i * 6 + 4] = brightness * 0.78;
+      colors[i * 6 + 5] = brightness * 0.34;
+    }
+
+    branchMesh.geometry.attributes.position.needsUpdate = true;
+    branchMesh.geometry.attributes.color.needsUpdate = true;
+
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const branch = branches[node.branchIndex];
+      const nodeGrowth = clamp01((growth - branch.depth * 0.13) / 0.62);
+      if (nodeGrowth > 0.86) {
+        dummy.position.copy(node.pos);
+        dummy.scale.setScalar((0.022 + Math.max(0, 4 - node.depth) * 0.002) * clamp01((nodeGrowth - 0.86) / 0.14));
+      } else {
+        dummy.position.set(0, -20, 0);
+        dummy.scale.setScalar(0);
+      }
+      dummy.updateMatrix();
+      nodeMesh.setMatrixAt(i, dummy.matrix);
+    }
+    nodeMesh.instanceMatrix.needsUpdate = true;
+
+    const particlePositions = particleMesh.geometry.getAttribute("position").array as Float32Array;
+    const particleColors = particleMesh.geometry.getAttribute("color").array as Float32Array;
+    for (let i = 0; i < particles.length; i++) {
+      const particle = particles[i];
+      const branch = branches[particle.branchIndex];
+      const branchGrowth = clamp01((growth - branch.depth * 0.13) / 0.62);
+      if (branchGrowth < 0.35 || fluid.reducedMotion) {
+        particlePositions[i * 3 + 1] = -20;
+        continue;
+      }
+
+      particle.t += particle.speed * particle.dir * delta * 0.18;
+      if (particle.t > 1 || particle.t < 0) {
+        particle.t = particle.t > 1 ? 0 : 1;
+        particle.branchIndex = Math.floor(Math.random() * branches.length);
+      }
+
+      const pt = Math.min(branchGrowth, clamp01(particle.t));
+      particlePositions[i * 3] = branch.start.x + (branch.end.x - branch.start.x) * pt;
+      particlePositions[i * 3 + 1] = branch.start.y + (branch.end.y - branch.start.y) * pt;
+      particlePositions[i * 3 + 2] = branch.start.z + (branch.end.z - branch.start.z) * pt;
+
+      const brightness = 0.52 + (1 - pt) * 0.36;
+      particleColors[i * 3] = brightness;
+      particleColors[i * 3 + 1] = brightness * 0.72;
+      particleColors[i * 3 + 2] = brightness * 0.25;
+    }
+    particleMesh.geometry.attributes.position.needsUpdate = true;
+    particleMesh.geometry.attributes.color.needsUpdate = true;
+
+    const pulse = 1 + Math.sin(elapsed * 1.7) * 0.045 + growth * 0.08 + (hovered ? 0.035 : 0);
+    coreRef.current?.scale.setScalar(pulse);
+    if (wireRef.current) {
+      wireRef.current.rotation.x = elapsed * 0.05;
+      wireRef.current.rotation.y = elapsed * 0.035;
+    }
+    if (wireOuterRef.current) {
+      wireOuterRef.current.rotation.x = -elapsed * 0.032;
+      wireOuterRef.current.rotation.z = elapsed * 0.026;
+    }
+  });
+
+  return (
+    <group ref={groupRef} scale={1.58}>
+      <lineSegments ref={branchRef} geometry={branchGeometry} frustumCulled={false} renderOrder={8}>
+        <lineBasicMaterial
+          vertexColors
+          transparent
+          opacity={hovered ? 0.92 : 0.78}
+          depthWrite={false}
+          depthTest={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </lineSegments>
+
+      <points ref={particleRef} geometry={particleGeometry} frustumCulled={false} renderOrder={10}>
+        <pointsMaterial
+          size={0.025}
+          vertexColors
+          transparent
+          opacity={hovered ? 0.9 : 0.64}
+          depthWrite={false}
+          depthTest={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </points>
+
+      <instancedMesh ref={nodeRef} args={[undefined, undefined, nodes.length]} frustumCulled={false} renderOrder={9}>
+        <sphereGeometry args={[1, 8, 6]} />
+        <meshBasicMaterial
+          color="#ffd64a"
+          transparent
+          opacity={hovered ? 0.82 : 0.64}
+          depthWrite={false}
+          depthTest={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </instancedMesh>
+
+      <Sphere ref={coreRef} args={[0.18, 32, 32]} renderOrder={12}>
+        <meshBasicMaterial
+          color="#ffd21f"
+          transparent
+          opacity={hovered ? 0.74 : 0.58}
+          depthWrite={false}
+          depthTest={false}
+          toneMapped={false}
+        />
+      </Sphere>
+      <Icosahedron ref={wireRef} args={[0.34, 1]} renderOrder={11}>
+        <meshBasicMaterial color="#c9943e" wireframe transparent opacity={0.24} depthWrite={false} toneMapped={false} />
+      </Icosahedron>
+      <Icosahedron ref={wireOuterRef} args={[0.48, 0]} renderOrder={11}>
+        <meshBasicMaterial color="#c9943e" wireframe transparent opacity={0.12} depthWrite={false} toneMapped={false} />
+      </Icosahedron>
+    </group>
   );
 }
 
@@ -531,6 +832,10 @@ function ArtifactScene({ type, hovered, expanded }: Required<ProjectArtifactProp
 
   if (type === "flowe") {
     return <FlowENodeGraph hovered={hovered && !reducedMotion} expanded={expanded} />;
+  }
+
+  if (type === "argyph") {
+    return <ArgyphDendriticArtifact hovered={hovered && !reducedMotion} expanded={expanded} />;
   }
 
   return <RaymarchedArtifact mode={type} hovered={hovered && !reducedMotion} expanded={expanded} />;

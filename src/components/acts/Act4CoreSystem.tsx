@@ -33,21 +33,24 @@ export default function Act4CoreSystem() {
 
   return (
     <section
-      className="fixed inset-0 z-10 flex flex-col items-center justify-center pointer-events-none"
+      className="fixed inset-0 z-10 pointer-events-none"
       style={{ opacity }}
       aria-label="Core System"
     >
-      <div className="absolute top-[18%] left-1/2 -translate-x-1/2 text-center px-6">
+      <div className="absolute top-[clamp(2.75rem,7vh,5.5rem)] left-1/2 z-10 w-full -translate-x-1/2 px-6 text-center">
         <div className="font-ui text-[var(--text-secondary)] mb-3">
           Act IV — The Core System
         </div>
-        <h2 className="font-h2 !text-[clamp(2rem,7vw,7rem)] text-[var(--text-primary)]">
+        <h2 className="font-h2 !text-[clamp(2.75rem,7vw,6.5rem)] text-[var(--text-primary)]">
           Leadership &amp; Scale
         </h2>
       </div>
 
       {/* horizontal track */}
-      <div className="relative w-screen overflow-hidden" style={{ height: "44vh" }}>
+      <div
+        className="absolute inset-x-0 top-[31vh] w-screen overflow-hidden"
+        style={{ height: "62vh" }}
+      >
         <div
           className="flex h-full items-center transition-transform duration-300 ease-out"
           style={{
@@ -61,15 +64,15 @@ export default function Act4CoreSystem() {
             return (
               <div
                 key={s.id}
-                className="flex flex-col items-center justify-center px-[10vw] text-center"
+                className="flex flex-col items-center justify-start px-[10vw] pt-[clamp(0rem,1.5vh,1rem)] text-center"
                 style={{ width: "100vw" }}
               >
                 {/* geometric shape (magnetic fluid metaphor) */}
                 <div
-                  className="mb-8 flex items-center justify-center rounded-2xl transition-all duration-500"
+                  className="mb-[clamp(1rem,2.5vh,1.75rem)] flex items-center justify-center rounded-2xl transition-all duration-500"
                   style={{
-                    width: active ? 140 : 96,
-                    height: active ? 140 : 96,
+                    width: active ? "clamp(5rem, 7vw, 7rem)" : "clamp(4rem, 5vw, 5.5rem)",
+                    height: active ? "clamp(5rem, 7vw, 7rem)" : "clamp(4rem, 5vw, 5.5rem)",
                     transform: `scale(${active ? 1.05 : 0.85}) rotate(${active ? 0 : 12}deg)`,
                     background: active
                       ? `radial-gradient(circle, rgba(94,92,230,0.35), rgba(94,92,230,0.05) 70%)`
@@ -85,13 +88,13 @@ export default function Act4CoreSystem() {
                 </div>
 
                 <div
-                  className="font-h2 !text-[clamp(3rem,10vw,9rem)] leading-none transition-colors duration-500"
+                  className="font-h2 !text-[clamp(3.25rem,10vw,8.5rem)] leading-none transition-colors duration-500"
                   style={{ color: active ? "var(--text-primary)" : "var(--text-secondary)" }}
                 >
                   {s.value}
                 </div>
                 <div className="mt-3 font-ui text-[var(--text-primary)]">{s.label}</div>
-                <div className="mt-3 max-w-md font-body !text-[1.05rem] text-[var(--text-secondary)]">
+                <div className="mt-3 max-w-[min(34rem,82vw)] font-body !text-[clamp(0.95rem,1.4vw,1.1rem)] text-[var(--text-secondary)]">
                   {s.detail}
                 </div>
               </div>

@@ -33,6 +33,10 @@ export const metadata: Metadata = {
     "fluid simulation",
   ],
   authors: [{ name: "Ezzy Rappeport" }],
+  icons: {
+    icon: [{ url: "/logo.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/logo.svg", type: "image/svg+xml" }],
+  },
   openGraph: {
     title: "Ezzy Rappeport — Kinetic Fluid Canvas",
     description: "AI systems and consumer iOS software at scale.",

@@ -75,7 +75,7 @@ export function useDeviceCapabilities() {
     if (mem && mem <= 4 && tier === "high") tier = "medium";
 
     const renderMode: "webgl" | "fallback" =
-      tier === "low" && isTouch ? "fallback" : "webgl";
+      reducedMotion || isTouch || tier === "low" ? "fallback" : "webgl";
 
     useFluidStore.getState().set({
       gpuTier: tier,

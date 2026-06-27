@@ -1,21 +1,39 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useFluidStore } from "@/lib/store";
 import { PROJECTS } from "@/lib/content";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Crosshair } from "lucide-react";
-import ProjectArtifact, { type ProjectArtifactType } from "@/components/artifacts/ProjectArtifact";
-import {
-  MonkeyClawCaseStudy,
-  FlowECaseStudy,
-  ArgyphCaseStudy,
-} from "@/components/casestudies";
+import type { ProjectArtifactType } from "@/components/artifacts/ProjectArtifact";
+
+const ProjectArtifact = dynamic(
+  () => import("@/components/artifacts/ProjectArtifact"),
+  { ssr: false },
+);
+
+function CaseStudyLoading() {
+  return (
+    <div className="flex min-h-[420px] items-center justify-center font-ui text-[var(--text-secondary)]">
+      Loading case study
+    </div>
+  );
+}
 
 const CASE_STUDIES = [
-  <MonkeyClawCaseStudy key="mc" />,
-  <FlowECaseStudy key="fl" />,
-  <ArgyphCaseStudy key="ar" />,
+  dynamic(() => import("@/components/casestudies/MonkeyClawCaseStudy"), {
+    ssr: false,
+    loading: CaseStudyLoading,
+  }),
+  dynamic(() => import("@/components/casestudies/FlowECaseStudy"), {
+    ssr: false,
+    loading: CaseStudyLoading,
+  }),
+  dynamic(() => import("@/components/casestudies/ArgyphCaseStudy"), {
+    ssr: false,
+    loading: CaseStudyLoading,
+  }),
 ];
 
 /**
@@ -58,6 +76,8 @@ export default function Act3Islands() {
   }, [project]);
 
   const isOpen = activeProject !== null;
+  const shouldMountArtifact = opacity > 0.02 || isOpen;
+  const ActiveCaseStudy = activeProject !== null ? CASE_STUDIES[activeProject] : null;
 
   return (
     <section
@@ -83,11 +103,13 @@ export default function Act3Islands() {
           boxShadow: `0 0 90px ${project.accent.hex}30`,
         }}
       >
-        <ProjectArtifact
-          type={project.id as ProjectArtifactType}
-          hovered={hovered}
-          expanded={activeProject === idx}
-        />
+        {shouldMountArtifact && (
+          <ProjectArtifact
+            type={project.id as ProjectArtifactType}
+            hovered={hovered}
+            expanded={activeProject === idx}
+          />
+        )}
 
         {/* orbiting index ring */}
         <div
@@ -186,7 +208,7 @@ export default function Act3Islands() {
               >
                 <X className="h-5 w-5" />
               </button>
-              {CASE_STUDIES[activeProject]}
+              {ActiveCaseStudy && <ActiveCaseStudy />}
             </motion.div>
           </motion.div>
         )}

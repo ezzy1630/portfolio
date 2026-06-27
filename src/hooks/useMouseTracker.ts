@@ -12,6 +12,7 @@ export function useMouseTracker(enabled: boolean) {
   const last = useRef<{ x: number; y: number; t: number } | null>(null);
   const raf = useRef<number>(0);
   const next = useRef<{ x: number; y: number } | null>(null);
+  const needsIdleReset = useRef(false);
 
   useEffect(() => {
     if (!enabled) return;
@@ -28,7 +29,15 @@ export function useMouseTracker(enabled: boolean) {
 
     const tick = () => {
       raf.current = requestAnimationFrame(tick);
-      if (!next.current) return;
+      if (!next.current) {
+        if (needsIdleReset.current && last.current) {
+          needsIdleReset.current = false;
+          useFluidStore
+            .getState()
+            .setMouse(last.current.x, last.current.y, 0, 0);
+        }
+        return;
+      }
       const now = performance.now();
       const dt = Math.max(1, now - (last.current?.t ?? now));
       const px = (last.current?.x ?? next.current.x) as number;
@@ -37,6 +46,8 @@ export function useMouseTracker(enabled: boolean) {
       const dy = (next.current.y - py) / dt;
       useFluidStore.getState().setMouse(next.current.x, next.current.y, dx, dy);
       last.current = { x: next.current.x, y: next.current.y, t: now };
+      next.current = null;
+      needsIdleReset.current = true;
     };
 
     window.addEventListener("pointermove", onMove, { passive: true });

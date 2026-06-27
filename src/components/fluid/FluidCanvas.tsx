@@ -5,9 +5,9 @@ import { useFluidStore } from "@/lib/store";
 import FluidSimulation from "./FluidSimulation";
 
 function resolutionScaleFor(tier: "high" | "medium" | "low") {
-  if (tier === "high") return 0.5;
-  if (tier === "medium") return 0.35;
-  return 0.25;
+  if (tier === "high") return 0.4;
+  if (tier === "medium") return 0.28;
+  return 0.2;
 }
 
 export default function FluidCanvas() {
@@ -34,9 +34,9 @@ export default function FluidCanvas() {
           powerPreference: "high-performance",
           stencil: false,
           depth: false,
-          preserveDrawingBuffer: true,
+          preserveDrawingBuffer: false,
         }}
-        dpr={[1, gpuTier === "high" ? 1.5 : 1]}
+        dpr={[1, gpuTier === "high" ? 1.25 : 1]}
         flat
         frameloop={reducedMotion ? "demand" : "always"}
         style={{ background: "#030303" }}

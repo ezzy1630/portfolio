@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import FluidCanvas from "@/components/fluid/FluidCanvas";
+import dynamic from "next/dynamic";
 import { HERO, PROJECTS } from "@/lib/content";
 import { useFluidStore } from "@/lib/store";
 import { fluidComputeWGSL, textDisplaceWGSL } from "./webgpuFluidShaders";
@@ -43,7 +43,9 @@ type WebGPURuntime = {
   typographyWidth: number;
   typographyHeight: number;
   lastFrame: number;
+  lastDraw: number;
   lastCapture: number;
+  typographyKey: string;
 };
 
 interface WebGPUFluidCanvasProps {
@@ -55,10 +57,23 @@ const TYPOGRAPHY_FORMAT: GPUTextureFormat = "rgba8unorm";
 const COMPUTE_UNIFORM_BYTES = 64;
 const RENDER_UNIFORM_BYTES = 32;
 const TYPOGRAPHY_SOURCE_ID = "webgpu-typography-texture-source";
+const FluidCanvas = dynamic(() => import("@/components/fluid/FluidCanvas"), {
+  ssr: false,
+  loading: () => <FluidFallback />,
+});
 
 export function supportsWebGPU() {
   if (typeof navigator === "undefined") return false;
   return Boolean((navigator as GPUCapableNavigator).gpu);
+}
+
+function FluidFallback() {
+  return (
+    <div
+      data-fluid-canvas
+      className="fluid-fallback pointer-events-none fixed inset-0 z-0"
+    />
+  );
 }
 
 function subscribeMounted() {
@@ -74,9 +89,9 @@ function getServerSnapshot() {
 }
 
 function resolutionScaleFor(tier: "high" | "medium" | "low") {
-  if (tier === "high") return 0.62;
-  if (tier === "medium") return 0.45;
-  return 0.32;
+  if (tier === "high") return 0.48;
+  if (tier === "medium") return 0.34;
+  return 0.24;
 }
 
 function createFluidTexturePair(
@@ -245,6 +260,16 @@ function ensureTypographySource(width: number, height: number) {
   return source;
 }
 
+function currentTypographyKey() {
+  const state = useFluidStore.getState();
+  const activeProjectId = state.activeProjectId ?? "hero";
+  const progressZone =
+    state.scrollProgress > 0.25 && state.scrollProgress < 0.75
+      ? "project"
+      : "hero";
+  return `${progressZone}:${activeProjectId}`;
+}
+
 async function captureTypographyCanvas(width: number, height: number) {
   const { toCanvas } = await import("html-to-image");
   const target = ensureTypographySource(width, height);
@@ -253,7 +278,7 @@ async function captureTypographyCanvas(width: number, height: number) {
     height,
     pixelRatio: 1,
     backgroundColor: "#050507",
-    cacheBust: true,
+    cacheBust: false,
   });
 
   if (captured.width > 0 && captured.height > 0) return captured;
@@ -296,7 +321,7 @@ function uploadCanvasToTypography(runtime: WebGPURuntime, canvas: HTMLCanvasElem
 
 async function uploadTypography(runtime: WebGPURuntime) {
   const now = performance.now();
-  if (now - runtime.lastCapture < 1400) return;
+  if (now - runtime.lastCapture < 500) return;
   runtime.lastCapture = now;
 
   let canvas: HTMLCanvasElement;
@@ -448,7 +473,9 @@ async function createRuntime(canvas: HTMLCanvasElement): Promise<WebGPURuntime> 
     typographyWidth: width,
     typographyHeight: height,
     lastFrame: performance.now(),
+    lastDraw: 0,
     lastCapture: 0,
+    typographyKey: currentTypographyKey(),
   };
 
   rebuildBindGroups(runtime);
@@ -494,6 +521,32 @@ function renderFrame(runtime: WebGPURuntime, now: number) {
   runtime.device.queue.submit([encoder.finish()]);
 }
 
+function shouldUseWebGPU({
+  enabled,
+  mounted,
+  reducedMotion,
+  renderMode,
+  isTouch,
+  gpuTier,
+}: {
+  enabled: boolean;
+  mounted: boolean;
+  reducedMotion: boolean;
+  renderMode: "webgl" | "fallback";
+  isTouch: boolean;
+  gpuTier: "high" | "medium" | "low";
+}) {
+  return (
+    mounted &&
+    enabled &&
+    !reducedMotion &&
+    renderMode === "webgl" &&
+    !isTouch &&
+    gpuTier === "high" &&
+    supportsWebGPU()
+  );
+}
+
 /**
  * Production WebGPU fluid renderer. It owns a real WebGPU compute pass for the
  * velocity/density field and a render pass that displaces a DOM typography
@@ -506,7 +559,6 @@ export default function WebGPUFluidCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const runtimeRef = useRef<WebGPURuntime | null>(null);
   const frameRef = useRef(0);
-  const captureIntervalRef = useRef(0);
   const captureQueuedRef = useRef(false);
   const mounted = useSyncExternalStore(
     subscribeMounted,
@@ -514,12 +566,53 @@ export default function WebGPUFluidCanvas({
     getServerSnapshot,
   );
   const [forcedFallback, setForcedFallback] = useState(false);
+  const gpuTier = useFluidStore((s) => s.gpuTier);
+  const renderMode = useFluidStore((s) => s.renderMode);
+  const reducedMotion = useFluidStore((s) => s.reducedMotion);
+  const isTouch = useFluidStore((s) => s.isTouch);
+
+  const useWebGPU = shouldUseWebGPU({
+    enabled,
+    mounted,
+    reducedMotion,
+    renderMode,
+    isTouch,
+    gpuTier,
+  });
 
   useEffect(() => {
-    if (!mounted) return;
-    if (!enabled || !supportsWebGPU()) return;
+    if (!useWebGPU) return;
 
     let cancelled = false;
+
+    const queueTypographyUpload = (runtime: WebGPURuntime, force = false) => {
+      if (captureQueuedRef.current) return;
+      const key = currentTypographyKey();
+      if (!force && key === runtime.typographyKey) return;
+      runtime.typographyKey = key;
+      captureQueuedRef.current = true;
+      void uploadTypography(runtime).finally(() => {
+        captureQueuedRef.current = false;
+      });
+    };
+
+    const startLoop = () => {
+      const minFrameMs = 1000 / 45;
+      const loop = (now: number) => {
+        const current = runtimeRef.current;
+        if (!current) return;
+
+        if (!document.hidden && now - current.lastDraw >= minFrameMs) {
+          current.lastDraw = now;
+          renderFrame(current, now);
+          queueTypographyUpload(current);
+        }
+
+        frameRef.current = requestAnimationFrame(loop);
+      };
+
+      frameRef.current = requestAnimationFrame(loop);
+    };
 
     async function boot() {
       const canvas = canvasRef.current;
@@ -533,23 +626,8 @@ export default function WebGPUFluidCanvas({
         }
         runtimeRef.current = runtime;
         document.documentElement.dataset.webgpuFluid = "active";
-
-        const loop = (now: number) => {
-          const current = runtimeRef.current;
-          if (!current) return;
-          renderFrame(current, now);
-          frameRef.current = requestAnimationFrame(loop);
-        };
-
-        frameRef.current = requestAnimationFrame(loop);
-        captureIntervalRef.current = window.setInterval(() => {
-          const current = runtimeRef.current;
-          if (!current || captureQueuedRef.current) return;
-          captureQueuedRef.current = true;
-          void uploadTypography(current).finally(() => {
-            captureQueuedRef.current = false;
-          });
-        }, 2800);
+        queueTypographyUpload(runtime, true);
+        startLoop();
       } catch (error) {
         console.warn("WebGPU fluid failed; falling back to WebGL2.", error);
         if (!cancelled) setForcedFallback(true);
@@ -561,7 +639,6 @@ export default function WebGPUFluidCanvas({
       const old = runtimeRef.current;
       if (!canvas || !old) return;
       cancelAnimationFrame(frameRef.current);
-      window.clearInterval(captureIntervalRef.current);
       destroyRuntime(old);
       runtimeRef.current = null;
       void createRuntime(canvas)
@@ -571,21 +648,8 @@ export default function WebGPUFluidCanvas({
             return;
           }
           runtimeRef.current = runtime;
-          const loop = (now: number) => {
-            const current = runtimeRef.current;
-            if (!current) return;
-            renderFrame(current, now);
-            frameRef.current = requestAnimationFrame(loop);
-          };
-          frameRef.current = requestAnimationFrame(loop);
-          captureIntervalRef.current = window.setInterval(() => {
-            const current = runtimeRef.current;
-            if (!current || captureQueuedRef.current) return;
-            captureQueuedRef.current = true;
-            void uploadTypography(current).finally(() => {
-              captureQueuedRef.current = false;
-            });
-          }, 2800);
+          queueTypographyUpload(runtime, true);
+          startLoop();
         })
         .catch(() => {
           if (!cancelled) setForcedFallback(true);
@@ -599,7 +663,6 @@ export default function WebGPUFluidCanvas({
       cancelled = true;
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(frameRef.current);
-      window.clearInterval(captureIntervalRef.current);
       destroyRuntime(runtimeRef.current);
       runtimeRef.current = null;
       if (document.documentElement.dataset.webgpuFluid === "active") {
@@ -607,10 +670,17 @@ export default function WebGPUFluidCanvas({
       }
       document.getElementById(TYPOGRAPHY_SOURCE_ID)?.remove();
     };
-  }, [enabled, mounted]);
+  }, [useWebGPU]);
 
   if (!mounted) return null;
-  if (!enabled || forcedFallback || !supportsWebGPU()) return <FluidCanvas />;
+  if (!enabled) return null;
+  if (forcedFallback) return <FluidCanvas />;
+  if (!useWebGPU) {
+    if (renderMode === "fallback" || reducedMotion || isTouch || gpuTier === "low") {
+      return <FluidFallback />;
+    }
+    return <FluidCanvas />;
+  }
 
   return (
     <canvas

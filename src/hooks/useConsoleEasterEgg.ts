@@ -179,18 +179,9 @@ export function useConsoleEasterEgg() {
       clear: console.clear.bind(console),
     };
 
-    console.log = () => undefined;
-    console.warn = () => undefined;
-    console.error = () => undefined;
-    console.info = () => undefined;
     let activeRun: ConsoleFn | undefined;
 
     const timer = window.setTimeout(() => {
-      console.log = original.log;
-      console.warn = original.warn;
-      console.error = original.error;
-      console.info = original.info;
-
       const run = commandRunner(original.log, original.clear);
       activeRun = run;
       installGlobalCommand("run", run);
@@ -201,10 +192,6 @@ export function useConsoleEasterEgg() {
 
     return () => {
       window.clearTimeout(timer);
-      console.log = original.log;
-      console.warn = original.warn;
-      console.error = original.error;
-      console.info = original.info;
       if (window.run === activeRun) delete window.run;
       if (window.ezzy === activeRun) delete window.ezzy;
       if (document.documentElement.dataset.ezzyCli === "ready") {

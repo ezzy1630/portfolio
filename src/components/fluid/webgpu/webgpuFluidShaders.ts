@@ -155,7 +155,8 @@ fn fragmentMain(in: VertexOut) -> @location(0) vec4<f32> {
   ) * 0.003;
   let warpedUv = clamp(in.uv + velocity * params.displacement + wave * density, vec2<f32>(0.0), vec2<f32>(1.0));
 
-  let text = textureSample(typographyTexture, typographySampler, warpedUv);
+  let typographyUv = vec2<f32>(warpedUv.x, 1.0 - warpedUv.y);
+  let text = textureSample(typographyTexture, typographySampler, typographyUv);
   let caustic = 0.5 + 0.5 * sin((in.uv.x + velocity.y) * 36.0 + params.time);
   let liquid = vec3<f32>(0.04, 0.52, 1.0) * density * params.inkBoost;
   let highlight = vec3<f32>(0.96, 0.96, 0.98) * caustic * density * 0.18;

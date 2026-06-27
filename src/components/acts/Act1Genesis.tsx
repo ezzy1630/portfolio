@@ -12,13 +12,11 @@ import { HERO } from "@/lib/content";
 export default function Act1Genesis() {
   const p = useFluidStore((s) => s.scrollProgress);
 
-  const reveal = Math.min(1, p / 0.05);
   const exit = Math.max(0, (p - 0.07) / 0.03);
-  const opacity = Math.max(0, reveal - exit);
-  const inset = 50 * (1 - reveal);
+  const opacity = Math.max(0, 1 - exit);
+  const inset = 0;
 
-  // thesis appears after the name is mostly revealed
-  const thesisOpacity = Math.max(0, Math.min(1, (p - 0.03) / 0.03) - exit);
+  const thesisOpacity = opacity;
 
   return (
     <section
@@ -31,6 +29,7 @@ export default function Act1Genesis() {
         style={{
           clipPath: `inset(${inset}% 0 ${inset}% 0)`,
           WebkitClipPath: `inset(${inset}% 0 ${inset}% 0)`,
+          fontSize: "clamp(4.5rem, 13vw, 11rem)",
           color: "var(--text-primary)",
           textShadow:
             "0 0 40px rgba(94,92,230,0.35), 0 0 80px rgba(94,92,230,0.2)",

@@ -205,6 +205,18 @@ function makeFallbackTypographyCanvas(width: number, height: number) {
   return canvas;
 }
 
+function makeBlankTypographyCanvas(width: number, height: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, width);
+  canvas.height = Math.max(1, height);
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "#050507";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  return canvas;
+}
+
 function ensureTypographySource(width: number, height: number) {
   let source = document.getElementById(TYPOGRAPHY_SOURCE_ID);
   if (!source) {
@@ -325,6 +337,15 @@ async function uploadTypography(runtime: WebGPURuntime) {
   runtime.lastCapture = now;
 
   let canvas: HTMLCanvasElement;
+  const key = currentTypographyKey();
+  if (key.startsWith("hero:")) {
+    uploadCanvasToTypography(
+      runtime,
+      makeBlankTypographyCanvas(runtime.width, runtime.height),
+    );
+    return;
+  }
+
   try {
     canvas = await withTimeout(
       captureTypographyCanvas(runtime.width, runtime.height),
@@ -479,7 +500,7 @@ async function createRuntime(canvas: HTMLCanvasElement): Promise<WebGPURuntime> 
   };
 
   rebuildBindGroups(runtime);
-  uploadCanvasToTypography(runtime, makeFallbackTypographyCanvas(width, height));
+  uploadCanvasToTypography(runtime, makeBlankTypographyCanvas(width, height));
   return runtime;
 }
 

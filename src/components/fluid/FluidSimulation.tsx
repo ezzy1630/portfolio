@@ -67,7 +67,7 @@ export default function FluidSimulation({ resolutionScale }: Props) {
         uSim: { value: null as THREE.Texture | null },
         uPoint: { value: new THREE.Vector2(0.5, 0.5) },
         uVelocity: { value: new THREE.Vector2(0, 0) },
-        uRadius: { value: 0.0009 },
+        uRadius: { value: 0.00048 },
         uInk: { value: 0.45 },
         uAspect: { value: 1 },
       },

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useFluidStore } from "@/lib/store";
 import { PROJECTS } from "@/lib/content";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, ArrowUpRight, Crosshair } from "lucide-react";
+import { X, Crosshair } from "lucide-react";
+import ProjectArtifact, { type ProjectArtifactType } from "@/components/artifacts/ProjectArtifact";
 import {
   MonkeyClawCaseStudy,
   FlowECaseStudy,
@@ -64,7 +65,7 @@ export default function Act3Islands() {
       style={{ opacity }}
       aria-label="Execution Islands"
     >
-      {/* The island sphere */}
+      {/* The living project artifact */}
       <button
         type="button"
         aria-label={`Open ${project.title}`}
@@ -75,18 +76,22 @@ export default function Act3Islands() {
         className="group relative flex items-center justify-center rounded-full transition-transform duration-500"
         style={{
           pointerEvents: opacity > 0.3 ? "auto" : "none",
-          width: "min(46vmin, 440px)",
-          height: "min(46vmin, 440px)",
+          width: "clamp(260px, 46vmin, 440px)",
+          height: "clamp(260px, 46vmin, 440px)",
           transform: `scale(${hovered ? 1.04 : 1}) ${isOpen ? "scale(1.4)" : ""}`,
-          background: `radial-gradient(circle at 35% 30%, ${project.accent.hex}40, ${project.accent.hexHighlight}25 45%, rgba(10,10,15,0.92) 75%)`,
-          boxShadow: `0 0 90px ${project.accent.hex}40, inset 0 0 70px ${project.accent.hexHighlight}30`,
-          backdropFilter: "blur(20px)",
-          border: `1px solid ${project.accent.hex}40`,
+          background: `radial-gradient(circle at 50% 50%, ${project.accent.hex}18, transparent 64%)`,
+          boxShadow: `0 0 90px ${project.accent.hex}30`,
         }}
       >
+        <ProjectArtifact
+          type={project.id as ProjectArtifactType}
+          hovered={hovered}
+          expanded={activeProject === idx}
+        />
+
         {/* orbiting index ring */}
         <div
-          className="absolute inset-0 rounded-full"
+          className="absolute inset-0 rounded-full border border-white/10"
           style={{ transform: `rotate(${local * 360}deg)` }}
         >
           <span
@@ -104,11 +109,16 @@ export default function Act3Islands() {
         </div>
 
         {/* center label */}
-        <div className="flex flex-col items-center gap-2 px-6 text-center">
+        <div
+          className="relative z-10 flex flex-col items-center gap-2 px-6 text-center"
+          style={{
+            textShadow: "0 1px 18px rgba(0,0,0,0.9), 0 0 28px rgba(0,0,0,0.8)",
+          }}
+        >
           <span className="font-ui text-[var(--text-secondary)]">
             {project.category}
           </span>
-          <span className="font-h2 !text-[clamp(1.8rem,5vw,4rem)] text-[var(--text-primary)] leading-none">
+          <span className="font-h2 !text-[clamp(1.35rem,5vw,4rem)] text-[var(--text-primary)] leading-none">
             {project.title}
           </span>
           <span className="font-ui text-[var(--text-secondary)] !text-[0.7rem] !tracking-[0.1em] normal-case max-w-[80%]">

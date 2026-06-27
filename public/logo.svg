@@ -2,6 +2,7 @@
   <rect width="64" height="64" rx="13" fill="#2b2b2b"/>
   <path
     fill="#fff"
-    d="M10 14h22v8H18v6h12v8H18v6h14v8H10V14Zm0 0h8v36h-8V14ZM36 14h8v36h-8V14Zm0 0h14c5.7 0 9.5 3.6 9.5 9s-3.8 9-9.5 9H36v-7h13c1.5 0 2.5-.8 2.5-2s-1-2-2.5-2H36v-7Zm9 18h8l7.5 18h-9L45 32Z"
+    d="M8 14h23v8H17v6h12v8H17v6h14v8H8V14Zm26 0h13.5C54 14 58 18.1 58 24.1c0 4.7-2.7 8-7.1 9.4L58 50h-9L41.9 34H42v16h-8V14Zm8 7v7h5.6c2 0 3.2-1.4 3.2-3.5S49.6 21 47.6 21H42Z"
+    fill-rule="evenodd"
   />
 </svg>

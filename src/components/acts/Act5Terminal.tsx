@@ -78,13 +78,13 @@ export default function Act5Terminal() {
   const messageRef = useRef<HTMLTextAreaElement>(null);
   const copyBtnRef = useRef<HTMLButtonElement>(null);
 
-  const reveal = smoothStep(0.875, 0.95, p);
+  const reveal = smoothStep(0.915, 0.975, p);
   const opacity = reveal;
   const interactive = opacity > 0.3;
   const pointerEvents: "auto" | "none" = interactive ? "auto" : "none";
 
   // central glowing dot expansion 0..1 across the Act 4 -> Act 5 handoff
-  const dotScale = smoothStep(0.86, 0.97, p);
+  const dotScale = smoothStep(0.9, 0.985, p);
   const contentY = (1 - reveal) * 12;
   const contentScale = 0.96 + reveal * 0.04;
 

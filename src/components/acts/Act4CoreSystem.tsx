@@ -27,14 +27,14 @@ export default function Act4CoreSystem() {
   const local = clamp01((p - start) / (end - start));
 
   const enter = smoothStep(0.735, 0.765, p);
-  const exit = smoothStep(0.855, 0.92, p);
+  const exit = smoothStep(0.9, 0.94, p);
   const opacity = enter * (1 - exit);
   const y = 8 * (1 - enter) - 12 * exit;
   const scale = 0.985 + 0.015 * enter - 0.035 * exit;
 
   // horizontal translate driven by local progress
   const count = LEADERSHIP.length;
-  const tx = -local * (count - 1) * (100 / count); // percent
+  const tx = -local * (count - 1) * 100; // vw
 
   // active stat index
   const activeIdx = Math.min(count - 1, Math.floor(local * count));

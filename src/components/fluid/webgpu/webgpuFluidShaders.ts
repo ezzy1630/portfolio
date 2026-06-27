@@ -23,8 +23,8 @@ struct SimParams {
   _pad: f32,
 };
 
-@group(0) @binding(0) var prevVelocity: texture_storage_2d<rgba16float, read>;
-@group(0) @binding(1) var prevDensity: texture_storage_2d<rgba16float, read>;
+@group(0) @binding(0) var prevVelocity: texture_2d<f32>;
+@group(0) @binding(1) var prevDensity: texture_2d<f32>;
 @group(0) @binding(2) var nextVelocity: texture_storage_2d<rgba16float, write>;
 @group(0) @binding(3) var nextDensity: texture_storage_2d<rgba16float, write>;
 @group(0) @binding(4) var<uniform> params: SimParams;
@@ -35,11 +35,11 @@ fn clampCoord(coord: vec2<i32>) -> vec2<i32> {
 }
 
 fn loadVelocity(coord: vec2<i32>) -> vec2<f32> {
-  return textureLoad(prevVelocity, clampCoord(coord)).xy;
+  return textureLoad(prevVelocity, clampCoord(coord), 0).xy;
 }
 
 fn loadDensity(coord: vec2<i32>) -> f32 {
-  return textureLoad(prevDensity, clampCoord(coord)).x;
+  return textureLoad(prevDensity, clampCoord(coord), 0).x;
 }
 
 fn bilinearVelocity(pos: vec2<f32>) -> vec2<f32> {
@@ -96,6 +96,14 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
   ) * 0.00006;
   velocity += shimmer;
 
+  let centered = uv - vec2<f32>(0.5);
+  let radialSeed = exp(-dot(centered, centered) / 0.18);
+  let bandSeed = 0.5 + 0.5 * sin(uv.x * 9.0 + uv.y * 7.0 + params.time * 0.32);
+  let ambientDensity = 0.035 + radialSeed * 0.12 + bandSeed * 0.025;
+  let swirl = vec2<f32>(-centered.y, centered.x) * radialSeed * 0.018;
+  velocity += swirl;
+  density = max(density, ambientDensity);
+
   textureStore(nextVelocity, coord, vec4<f32>(velocity, 0.0, 1.0));
   textureStore(nextDensity, coord, vec4<f32>(clamp(density, 0.0, 8.0), 0.0, 0.0, 1.0));
 }
@@ -141,13 +149,23 @@ fn fragmentMain(in: VertexOut) -> @location(0) vec4<f32> {
   let sampleCoord = vec2<i32>(clamp(in.uv * dims, vec2<f32>(0.0), dims - 1.0));
   let velocity = textureLoad(velocityTexture, sampleCoord, 0).xy;
   let density = textureLoad(densityTexture, sampleCoord, 0).x;
-  let warpedUv = in.uv + velocity * params.displacement;
+  let wave = vec2<f32>(
+    sin((in.uv.y + velocity.x) * 18.0 + params.time * 0.9),
+    cos((in.uv.x + velocity.y) * 16.0 - params.time * 0.8)
+  ) * 0.003;
+  let warpedUv = clamp(in.uv + velocity * params.displacement + wave * density, vec2<f32>(0.0), vec2<f32>(1.0));
 
   let text = textureSample(typographyTexture, typographySampler, warpedUv);
   let caustic = 0.5 + 0.5 * sin((in.uv.x + velocity.y) * 36.0 + params.time);
   let liquid = vec3<f32>(0.04, 0.52, 1.0) * density * params.inkBoost;
   let highlight = vec3<f32>(0.96, 0.96, 0.98) * caustic * density * 0.18;
+  let vignetteUv = in.uv - vec2<f32>(0.5);
+  let vignette = smoothstep(0.9, 0.12, length(vignetteUv));
+  let metalBand = 0.5 + 0.5 * sin(in.uv.x * 5.0 + in.uv.y * 3.5 + params.time * 0.3);
+  let base = vec3<f32>(0.006, 0.007, 0.01) + vec3<f32>(0.015, 0.055, 0.075) * metalBand * vignette;
+  let textGlow = text.rgb * (0.74 + density * 0.45);
+  let inkVeil = liquid * (0.28 + caustic * 0.2);
 
-  return vec4<f32>(text.rgb + liquid + highlight, text.a);
+  return vec4<f32>(base + textGlow + inkVeil + highlight, 1.0);
 }
 `;

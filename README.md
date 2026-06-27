@@ -86,14 +86,23 @@ The existing site remains scroll-locked until the animation completes and the Zu
 
 ## Fluid Renderer
 
-The live renderer is `src/components/fluid/FluidSimulation.tsx`:
+The preferred renderer is now `src/components/fluid/webgpu/WebGPUFluidCanvas.tsx`:
+
+- requests a WebGPU adapter/device with hard startup timeouts,
+- stores velocity and density in double-buffered GPU textures,
+- runs WGSL compute for advection, diffusion, ambient ink, mouse force, and scroll force,
+- captures a DOM typography texture with `html-to-image` on a side loop,
+- renders a fullscreen liquid-metal displacement pass,
+- falls back to the existing WebGL2/R3F renderer if WebGPU initialization fails.
+
+The fallback renderer is `src/components/fluid/FluidSimulation.tsx`:
 
 - stores velocity and ink in half-float render targets,
 - runs advection and splat passes offscreen,
 - composites an iridescent full-screen display shader,
 - responds to scroll progress, pointer velocity, and project accent colors.
 
-The WebGPU migration plan lives in `docs/WEBGPU_FLUID_ARCHITECTURE.md`, with WGSL in `src/components/fluid/webgpu/webgpuFluidShaders.ts`.
+The WebGPU implementation notes live in `docs/WEBGPU_FLUID_ARCHITECTURE.md`, with WGSL in `src/components/fluid/webgpu/webgpuFluidShaders.ts`.
 
 ## DevTools CLI
 

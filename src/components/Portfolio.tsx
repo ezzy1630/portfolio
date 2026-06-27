@@ -6,7 +6,7 @@ import { useMouseTracker } from "@/hooks/useMouseTracker";
 import { useLenisScroll } from "@/hooks/useLenisScroll";
 import { useConsoleEasterEgg } from "@/hooks/useConsoleEasterEgg";
 import { useFluidStore } from "@/lib/store";
-import FluidCanvas from "@/components/fluid/FluidCanvas";
+import WebGPUFluidCanvas from "@/components/fluid/webgpu/WebGPUFluidCanvas";
 import Act1Genesis from "@/components/acts/Act1Genesis";
 import Act2Current from "@/components/acts/Act2Current";
 import Act3Islands from "@/components/acts/Act3Islands";
@@ -49,7 +49,7 @@ export default function Portfolio() {
       <Preloader />
 
       {/* WebGL fluid (or CSS fallback) */}
-      <FluidCanvas />
+      <WebGPUFluidCanvas />
 
       {/* The five acts — fixed overlays reading scroll progress */}
       <Act1Genesis />
